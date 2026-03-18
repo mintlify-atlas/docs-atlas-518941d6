@@ -1,0 +1,263 @@
+---
+title: "Map plugin"
+description: "Overlay a custom image map on the viewer showing the current panorama position, with zoom, pan, and interactive hotspots."
+---
+
+The Map plugin displays a custom image (floor plan, site map, etc.) as an interactive overlay. The overlay shows the current panorama position and viewing direction, supports zoom and pan, and can include clickable hotspots.
+
+<Tip>
+  Looking for a geographic map (OpenStreetMap, Google Maps, etc.)? Use the [Plan plugin](/plugins/plan) instead.
+</Tip>
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/map-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/map-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/map-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+The minimum configuration requires `imageUrl` (path to the map image) and `center` (the pixel coordinates of the panorama on that image).
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { MapPlugin } from '@photo-sphere-viewer/map-plugin';
+
+const viewer = new Viewer({
+    plugins: [
+        MapPlugin.withConfig({
+            imageUrl: 'path/to/map.jpg',
+            center: { x: 785, y: 421 },
+            rotation: '-12deg',
+        }),
+    ],
+});
+```
+
+<Note>
+  The north of the compass is always toward the top of the map image, before applying any `rotation`.
+</Note>
+
+## Configuration
+
+<ParamField path="imageUrl" type="string" required>
+  URL of the map image. Not updatable after init — use `setImage()` instead.
+</ParamField>
+
+<ParamField path="center" type="{ x: number, y: number }" required>
+  Pixel position of the panorama on the map image. Updatable.
+</ParamField>
+
+<ParamField path="rotation" type="number | string" default="0">
+  Rotation applied to the map to align it with the panorama. Accepts radians or a degree string such as `'45deg'`. Updatable.
+</ParamField>
+
+<ParamField path="shape" type="'round' | 'square'" default="'round'">
+  Shape of the map widget. Updatable.
+</ParamField>
+
+<ParamField path="size" type="string" default="'200px'">
+  Size of the widget. Accepts any CSS length unit (`px`, `rem`, `vh`, etc.). Updatable.
+</ParamField>
+
+<ParamField path="position" type="string" default="'bottom left'">
+  Position of the widget on screen. Accepted values: combinations of `top`/`bottom` and `left`/`right`. Updatable.
+</ParamField>
+
+<ParamField path="static" type="boolean" default="false">
+  When `true`, the map does not rotate — only the center pin rotates to show the current viewing direction. Updatable.
+</ParamField>
+
+<ParamField path="overlayImage" type="string">
+  SVG or image URL drawn on top of the map. Set to `null` to disable. Defaults to a built-in SVG. Updatable.
+</ParamField>
+
+<ParamField path="pinImage" type="string">
+  SVG or image URL used for the central position pin. Defaults to a built-in SVG. Updatable.
+</ParamField>
+
+<ParamField path="pinSize" type="number" default="35">
+  Size of the central pin in pixels. Updatable.
+</ParamField>
+
+<ParamField path="coneColor" type="string" default="'#1E78E6'">
+  Color of the viewing-direction cone. Set to `null` to disable. Updatable.
+</ParamField>
+
+<ParamField path="coneSize" type="number" default="40">
+  Size of the viewing-direction cone. Updatable.
+</ParamField>
+
+<ParamField path="hotspots" type="MapHotspot[]" default="null">
+  Small dot markers on the map. Updatable. See [Hotspots](#hotspots) below. You can also call `setHotspots()`.
+
+  <Tip>
+    Markers from the Markers plugin can appear on the map by setting their `map` data property to a hotspot object (without `yaw`, which is inferred from the marker position). The marker tooltip is reused, and clicking a map hotspot rotates the viewer to face the marker.
+  </Tip>
+</ParamField>
+
+<ParamField path="spotStyle" type="object">
+  Default style applied to all hotspots. Updatable. Individual hotspots can override this with their own `style`.
+
+  | Field | Type | Default | Description |
+  |---|---|---|---|
+  | `size` | `number` | `15` | Hotspot diameter |
+  | `image` | `string` | — | SVG or image URL |
+  | `color` | `string` | `'white'` | Fill color when no image |
+  | `borderSize` | `number` | `0` | Border width |
+  | `borderColor` | `string` | `null` | Border color |
+  | `hoverSize` | `number` | `null` | Size on hover |
+  | `hoverImage` | `string` | `null` | Image on hover |
+  | `hoverColor` | `string` | `null` | Color on hover |
+  | `hoverBorderSize` | `number` | `4` | Border width on hover |
+  | `hoverBorderColor` | `string` | `'rgba(255,255,255,0.6)'` | Border color on hover |
+  | `zIndex` | `number` | `null` | Stacking order |
+</ParamField>
+
+<ParamField path="defaultZoom" type="number" default="100">
+  Initial zoom level of the map.
+</ParamField>
+
+<ParamField path="maxZoom" type="number" default="200">
+  Maximum zoom level. Updatable.
+</ParamField>
+
+<ParamField path="minZoom" type="number" default="20">
+  Minimum zoom level. Updatable.
+</ParamField>
+
+<ParamField path="visibleOnLoad" type="boolean" default="true">
+  Show the map when the first panorama loads.
+</ParamField>
+
+<ParamField path="minimizeOnHotspotClick" type="boolean" default="true">
+  Minimize the map when the user clicks a hotspot or marker. Updatable.
+</ParamField>
+
+<ParamField path="buttons" type="object" default="{ north: true, maximize: true, close: true, reset: true }">
+  Control which buttons are visible around the map widget.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      map: 'Map',
+      mapMaximize: 'Maximize',
+      mapMinimize: 'Minimize',
+      mapNorth: 'Go to north',
+      mapReset: 'Reset',
+  }
+  ```
+</ParamField>
+
+## Hotspots
+
+<ParamField path="id" type="string">
+  Identifier used to match `select-hotspot` events. Auto-generated if not provided.
+</ParamField>
+
+<ParamField path="yaw + distance" type="number">
+  Position as an angle (radians) and a distance (pixels on the map image) from the panorama center.
+</ParamField>
+
+<ParamField path="x + y" type="number">
+  Absolute pixel position on the map image. Use either `yaw`+`distance` or `x`+`y`.
+</ParamField>
+
+<ParamField path="style" type="object">
+  Overrides the default `spotStyle` for this hotspot.
+</ParamField>
+
+<ParamField path="tooltip" type="string | { content: string, className: string }">
+  Tooltip shown when hovering the hotspot.
+</ParamField>
+
+## Methods
+
+#### `setHotspots(hotspots)`
+
+Replaces all hotspots.
+
+```javascript
+mapPlugin.setHotspots([
+    { id: '1', yaw: '0deg', distance: 120, tooltip: 'Hotspot one' },
+    { id: '2', x: 150, y: 310 },
+]);
+```
+
+#### `clearHotspots()`
+
+Removes all hotspots.
+
+#### `setImage(url, center?, rotation?)`
+
+Replaces the map image.
+
+```javascript
+mapPlugin.setImage('map2.jpg', { x: 500, y: 500 });
+```
+
+#### `setCenter(center, resetView?)`
+
+Updates the panorama position on the map. When `resetView` is `false` (default `true`), the map viewport does not reposition, only the center pin moves.
+
+```javascript
+mapPlugin.setCenter({ x: 500, y: 500 });
+```
+
+#### `close()` / `open()`
+
+Toggles between closed and open states.
+
+#### `maximize()` / `minimize()`
+
+Toggles between maximized and minimized views. Has no effect when the map is closed.
+
+#### `setZoom(level)`
+
+Sets the zoom level (clamped between `minZoom` and `maxZoom`).
+
+## Events
+
+#### `select-hotspot(hotspotId)`
+
+Fired when the user clicks a hotspot.
+
+```javascript
+mapPlugin.addEventListener('select-hotspot', ({ hotspotId }) => {
+    console.log(`Clicked hotspot ${hotspotId}`);
+});
+```
+
+#### `view-changed(view)`
+
+Fired when the map state changes. `view` is `'maximized'`, `'normal'`, or `'closed'`.
+
+## SCSS variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `$radius` | `8px` | Corner radius (square shape only) |
+| `$shadow` | `0 0 5px rgba(0,0,0,.7)` | Widget shadow |
+| `$background` | `rgba(61,61,61,.7)` | Map background color |
+| `$button-size` | `34px` | Button size |
+| `$button-background` | `rgba(0,0,0,.5)` | Button background |
+| `$button-color` | `core.$buttons-color` | Button icon color |
+| `$toolbar-font` | `12px sans-serif` | Zoom indicator font |
+| `$toolbar-text-color` | `white` | Zoom indicator text color |
+| `$toolbar-background` | `#222` | Zoom indicator background |
+| `$transition` | `ease-in-out .3s` | Animation transition |

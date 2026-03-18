@@ -1,0 +1,119 @@
+---
+title: "Overlays plugin"
+description: "Display additional images or videos glued to the inside of the panorama sphere."
+---
+
+The Overlays plugin lets you place images (and videos) directly onto the panorama sphere. Unlike markers, overlays are part of the 3D scene and move naturally with the panorama. Both equirectangular (full or cropped) and cubemap geometries are supported.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/overlays-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/overlays-plugin
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { OverlaysPlugin } from '@photo-sphere-viewer/overlays-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        OverlaysPlugin.withConfig({
+            overlays: [
+                {
+                    id: 'overlay',
+                    path: 'path/to/overlay.png',
+                },
+            ],
+        }),
+    ],
+});
+
+const overlaysPlugin = viewer.getPlugin(OverlaysPlugin);
+
+overlaysPlugin.addEventListener('overlay-click', ({ overlayId }) => {
+    console.log(`Clicked on overlay ${overlayId}`);
+});
+```
+
+## Plugin configuration
+
+<ParamField path="overlays" type="OverlayConfig[]">
+  Initial list of overlays. Not updatable — use the methods below to add or remove overlays at runtime.
+</ParamField>
+
+<ParamField path="autoclear" type="boolean" default="true">
+  Automatically remove all overlays when the panorama changes. Updatable.
+</ParamField>
+
+<ParamField path="inheritSphereCorrection" type="boolean" default="true">
+  Apply the global `sphereCorrection` viewer option to each overlay. Not updatable after init.
+</ParamField>
+
+## Overlay configuration
+
+Each overlay is either a spherical overlay (one image/video) or a cube overlay (six images). All overlays share the following base properties.
+
+<ParamField path="id" type="string">
+  Unique identifier used to remove the overlay with `removeOverlay()`. Defaults to a random value.
+</ParamField>
+
+<ParamField path="opacity" type="number" default="1">
+  Opacity of the overlay.
+</ParamField>
+
+<ParamField path="zIndex" type="number" default="0">
+  Stacking order when multiple overlays overlap.
+</ParamField>
+
+### Spherical overlays
+
+<ParamField path="path" type="string" required>
+  Path to the overlay image or video file.
+</ParamField>
+
+<ParamField path="panoData" type="PanoData">
+  Crop data for partial panoramas. Works the same as the core `panoData` option. The `fullWidth` here does not have to match the base panorama — `croppedX`/`croppedY` are scaled accordingly.
+</ParamField>
+
+### Cube overlays
+
+<ParamField path="path" type="CubemapPanorama" required>
+  Six face images in the cubemap format. All six faces are required but individual faces can be `null`. See the [cubemap adapter page](/adapters/cubemap) for accepted syntax.
+</ParamField>
+
+## Methods
+
+#### `addOverlay(config)`
+
+Adds a new overlay at runtime.
+
+#### `removeOverlay(id)`
+
+Removes the overlay with the given ID.
+
+#### `clearOverlays()`
+
+Removes all overlays.
+
+## Events
+
+#### `overlay-click`
+
+Triggered when the user clicks an overlay.
+
+```javascript
+overlaysPlugin.addEventListener('overlay-click', ({ overlayId }) => {
+    console.log(`Clicked on overlay ${overlayId}`);
+});
+```

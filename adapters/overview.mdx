@@ -1,0 +1,92 @@
+---
+title: "Adapters overview"
+description: "Adapters load panorama textures into the Three.js scene. Learn which adapter to use for equirectangular images, cubemaps, tiled formats, and video panoramas."
+---
+
+Adapters are small pieces of code responsible for loading panorama texture(s) into the Three.js scene. Each adapter understands a specific image format and handles fetching, decoding, and mapping it onto the sphere or cube geometry.
+
+The core package ships with the equirectangular adapter built in. All other adapters are separate npm packages.
+
+## Available adapters
+
+<CardGroup cols={2}>
+  <Card title="Equirectangular" icon="image" href="/adapters/equirectangular">
+    The default adapter. Loads standard equirectangular JPEGs, including cropped or partial panoramas with XMP metadata support.
+  </Card>
+  <Card title="Equirectangular tiles" icon="grid-2x2" href="/adapters/equirectangular-tiles">
+    Reduces initial load time by slicing large equirectangular panoramas into smaller tiles loaded on demand.
+  </Card>
+  <Card title="Equirectangular video" icon="video" href="/adapters/equirectangular-video">
+    Displays equirectangular video panoramas. Requires the VideoPlugin.
+  </Card>
+  <Card title="Cubemap" icon="cube" href="/adapters/cubemap">
+    Loads cube mapping projections from six face images, a horizontal stripe, or a polyhedron net layout.
+  </Card>
+  <Card title="Cubemap tiles" icon="table-cells" href="/adapters/cubemap-tiles">
+    Reduces initial load time by slicing large cubemap faces into tiles loaded on demand.
+  </Card>
+  <Card title="Cubemap video" icon="film" href="/adapters/cubemap-video">
+    Displays cubemap video panoramas in the format used by YouTube. Requires the VideoPlugin.
+  </Card>
+  <Card title="Dual fisheye" icon="circle-half-stroke" href="/adapters/dual-fisheye">
+    Displays raw dual-fisheye files produced by 360° cameras such as the Ricoh Theta Z1.
+  </Card>
+</CardGroup>
+
+## Choosing an adapter
+
+| Use case | Adapter |
+|---|---|
+| Standard 360° photo (JPEG, PNG) | [Equirectangular](/adapters/equirectangular) (default) |
+| Very large equirectangular image | [Equirectangular tiles](/adapters/equirectangular-tiles) |
+| 360° video in equirectangular format | [Equirectangular video](/adapters/equirectangular-video) |
+| Six-face cubemap images | [Cubemap](/adapters/cubemap) |
+| Very large cubemap faces | [Cubemap tiles](/adapters/cubemap-tiles) |
+| Cubemap video (YouTube-style) | [Cubemap video](/adapters/cubemap-video) |
+| Raw file from Ricoh Theta Z1 | [Dual fisheye](/adapters/dual-fisheye) |
+
+## How to use an adapter
+
+Pass the adapter class to the `adapter` option when creating the `Viewer`. Some adapters also accept a configuration object, which you provide using the static `withConfig` method.
+
+<CodeGroup>
+
+```html CDN (importmap)
+<script type="importmap">
+    {
+        "imports": {
+            "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js",
+            "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+            "@photo-sphere-viewer/cubemap-adapter": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/cubemap-adapter/index.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import { CubemapAdapter } from '@photo-sphere-viewer/cubemap-adapter';
+
+    new Viewer({
+        adapter: CubemapAdapter,
+        // or with config:
+        // adapter: CubemapAdapter.withConfig({ /* options */ }),
+        panorama: { /* adapter-specific */ },
+    });
+</script>
+```
+
+```javascript npm + build tool
+import { Viewer } from '@photo-sphere-viewer/core';
+import { CubemapAdapter } from '@photo-sphere-viewer/cubemap-adapter';
+
+new Viewer({
+    adapter: CubemapAdapter,
+    panorama: { /* adapter-specific */ },
+});
+```
+
+</CodeGroup>
+
+<Note>
+  The equirectangular adapter is built into `@photo-sphere-viewer/core` and is the default. You only need to declare it explicitly if you want to pass configuration options.
+</Note>

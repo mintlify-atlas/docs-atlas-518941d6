@@ -1,0 +1,80 @@
+---
+title: "Gyroscope plugin"
+description: "Enable gyroscope-based device orientation controls on mobile devices."
+---
+
+The Gyroscope plugin adds gyroscope controls for mobile devices. When enabled, the viewer follows the physical orientation of the device. A navbar button is shown only when the gyroscope API is available.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/gyroscope-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/gyroscope-plugin
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { GyroscopePlugin } from '@photo-sphere-viewer/gyroscope-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        GyroscopePlugin,
+    ],
+});
+```
+
+<Tip>
+  The gyroscope API requires an HTTPS connection.
+</Tip>
+
+<Warning>
+  There are known inconsistencies in orientation data across devices. If the panorama appears in an unexpected orientation, this is a device-level issue and not a bug in the plugin.
+</Warning>
+
+## Configuration
+
+<ParamField path="touchmove" type="boolean" default="true">
+  Allow horizontal panning while the gyroscope is active. Requires the global `mousemove` viewer option to be `true`. Updatable.
+</ParamField>
+
+<ParamField path="roll" type="boolean" default="true">
+  Apply camera roll (rotation on the Z axis) based on device orientation. Updatable.
+</ParamField>
+
+<ParamField path="absolutePosition" type="boolean" default="false">
+  Use the absolute device orientation rather than keeping the current horizontal position when the gyroscope activates. Not updatable after init.
+</ParamField>
+
+<ParamField path="moveMode" type="'smooth' | 'fast'" default="'smooth'">
+  How gyroscope data is applied to the camera rotation. `smooth` interpolates between frames; `fast` applies data immediately. Updatable.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      gyroscope: 'Gyroscope',
+  }
+  ```
+</ParamField>
+
+## Navbar buttons
+
+This plugin adds one button to the default navbar:
+
+- **`gyroscope`** — toggles gyroscope control
+
+<Note>
+  If you use a custom navbar, add `'gyroscope'` to your navbar configuration manually. The button is only shown when the device exposes the gyroscope API.
+</Note>

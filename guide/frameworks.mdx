@@ -1,0 +1,178 @@
+---
+title: "Frameworks"
+description: "How to integrate Photo Sphere Viewer with React, Vue, and Angular using wrapper components that handle lifecycle and cleanup."
+---
+
+Photo Sphere Viewer is a plain JavaScript library that works in any environment. When using it inside a component-based framework, you need to manage the viewer lifecycle manually — create it when the component mounts, and destroy it when the component unmounts.
+
+<Warning>
+  Always call `viewer.destroy()` when the component is unmounted. Failing to do so causes memory leaks and may leave dangling event listeners.
+</Warning>
+
+<Note>
+  The community maintains [`react-photo-sphere-viewer`](https://www.npmjs.com/package/react-photo-sphere-viewer) by Elia Lazzari — a ready-made React wrapper you can use instead of writing your own.
+</Note>
+
+## Wrapper patterns
+
+The approach is the same across all frameworks:
+
+1. Declare a container element in the template.
+2. After mount, instantiate `Viewer` with the container reference.
+3. On unmount, call `viewer.destroy()`.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { useEffect, useRef } from 'react';
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import '@photo-sphere-viewer/core/index.css';
+
+    interface Props {
+      panorama: string;
+    }
+
+    export function PanoramaViewer({ panorama }: Props) {
+      const containerRef = useRef<HTMLDivElement>(null);
+
+      useEffect(() => {
+        const viewer = new Viewer({
+          container: containerRef.current!,
+          panorama,
+        });
+
+        // Destroy the viewer when the component unmounts
+        return () => {
+          viewer.destroy();
+        };
+      }, [panorama]);
+
+      return <div ref={containerRef} style={{ width: '100%', height: '500px' }} />;
+    }
+    ```
+
+    <Note>
+      The effect dependency array includes `panorama`. This means the viewer is recreated whenever the panorama prop changes. If you want to update the panorama without recreating the viewer, use `viewer.setPanorama()` inside the effect instead.
+    </Note>
+  </Tab>
+
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref, onMounted, onBeforeUnmount } from 'vue';
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import '@photo-sphere-viewer/core/index.css';
+
+    const props = defineProps<{ panorama: string }>();
+    const container = ref<HTMLElement | null>(null);
+    let viewer: Viewer | null = null;
+
+    onMounted(() => {
+      viewer = new Viewer({
+        container: container.value!,
+        panorama: props.panorama,
+      });
+    });
+
+    onBeforeUnmount(() => {
+      viewer?.destroy();
+    });
+    </script>
+
+    <template>
+      <div ref="container" style="width: 100%; height: 500px" />
+    </template>
+    ```
+
+    <Note>
+      Use `onBeforeUnmount` rather than `onUnmounted` to ensure `destroy()` runs before the container element is removed from the DOM.
+    </Note>
+  </Tab>
+
+  <Tab title="Angular">
+    ```typescript
+    import {
+      Component,
+      ElementRef,
+      Input,
+      OnDestroy,
+      OnInit,
+      ViewChild,
+    } from '@angular/core';
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import '@photo-sphere-viewer/core/index.css';
+
+    @Component({
+      selector: 'app-panorama-viewer',
+      template: `<div #container style="width: 100%; height: 500px"></div>`,
+    })
+    export class PanoramaViewerComponent implements OnInit, OnDestroy {
+      @Input() panorama!: string;
+      @ViewChild('container', { static: true }) containerRef!: ElementRef<HTMLElement>;
+
+      private viewer!: Viewer;
+
+      ngOnInit(): void {
+        this.viewer = new Viewer({
+          container: this.containerRef.nativeElement,
+          panorama: this.panorama,
+        });
+      }
+
+      ngOnDestroy(): void {
+        this.viewer?.destroy();
+      }
+    }
+    ```
+
+    <Note>
+      Using `{ static: true }` on `@ViewChild` makes the reference available in `ngOnInit`. If you use `static: false` (the default), move the viewer initialisation to `ngAfterViewInit` instead.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Accessing the viewer instance
+
+Once created, you can hold a reference to the viewer and call any method on it — for example to change the panorama, listen to events, or use plugins:
+
+```javascript
+// Change panorama after creation
+viewer.setPanorama('new-panorama.jpg');
+
+// Listen to viewer events
+viewer.addEventListener('position-updated', ({ position }) => {
+  console.log(position.yaw, position.pitch);
+});
+
+// Access a plugin
+const markersPlugin = viewer.getPlugin(MarkersPlugin);
+markersPlugin.addMarker({ id: 'point', position: { yaw: 0, pitch: 0 } });
+```
+
+See [Methods](/guide/methods) and [Events](/guide/events) for the full API.
+
+## Plugins and adapters
+
+Plugins and adapters are passed to the `Viewer` constructor in the same way regardless of framework:
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
+import '@photo-sphere-viewer/markers-plugin/index.css';
+
+new Viewer({
+  container: containerRef.current,
+  panorama: 'panorama.jpg',
+  plugins: [
+    [MarkersPlugin, {
+      markers: [
+        {
+          id: 'point',
+          position: { yaw: '45deg', pitch: '10deg' },
+          tooltip: 'A marker',
+        },
+      ],
+    }],
+  ],
+});
+```

@@ -1,0 +1,314 @@
+---
+title: "Writing a plugin"
+description: "Build a custom Photo Sphere Viewer plugin — from class structure and typed events to custom navbar buttons and packaging."
+---
+
+Plugins extend the viewer with new behaviour. This guide covers everything you need to create, configure, test, and publish your own plugin.
+
+<Tip>
+  A complete working example is available in the [examples folder](https://github.com/mistic100/Photo-Sphere-Viewer/tree/main/examples/custom-plugin) of the Photo Sphere Viewer repository.
+</Tip>
+
+## Plugin class structure
+
+<Steps>
+  <Step title="Extend AbstractPlugin">
+    The recommended way to create a plugin is to write an ES6 class that extends `AbstractPlugin` from `@photo-sphere-viewer/core`.
+
+    ```javascript
+    import { AbstractPlugin } from '@photo-sphere-viewer/core';
+
+    export class CustomPlugin extends AbstractPlugin {
+        static id = 'custom-plugin';
+
+        static withConfig(config) {
+            return [CustomPlugin, config];
+        }
+
+        constructor(viewer, config) {
+            super(viewer);
+        }
+
+        init() {
+            // perform initialization: subscribe to events, add DOM elements, etc.
+        }
+
+        destroy() {
+            // clean up everything you created in init()
+            super.destroy();
+        }
+    }
+    ```
+  </Step>
+
+  <Step title="Satisfy the requirements">
+    Your plugin class must follow these rules:
+
+    - It **must** accept a `Viewer` as its first constructor parameter and pass it to `super()`.
+    - It **must** have a `static id` string property.
+    - It **must** implement `init()` to subscribe to events and set up state.
+    - It **must** implement `destroy()` to release all resources, and call `super.destroy()`.
+    - It **may** accept a `config` object as the second constructor parameter.
+  </Step>
+
+  <Step title="Access the viewer">
+    Inside any method, `this.viewer` gives you the full viewer instance. Use it to read state, call methods, or subscribe to viewer events.
+
+    ```javascript
+    init() {
+        // listen to a viewer event
+        this.addEventListeners([
+            [this.viewer, 'click', this.onClick],
+        ]);
+    }
+
+    onClick = (event) => {
+        const position = this.viewer.getPosition();
+        console.log(position.yaw, position.pitch);
+    };
+    ```
+
+    See the [API reference](https://photo-sphere-viewer.js.org/api/classes/Core.Viewer.html) for the full list of viewer methods and properties.
+  </Step>
+
+  <Step title="Register the plugin with the viewer">
+    Pass the plugin class (or the result of `withConfig()`) in the viewer's `plugins` array:
+
+    ```javascript
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import { CustomPlugin } from './CustomPlugin';
+
+    const viewer = new Viewer({
+        panorama: 'path/to/panorama.jpg',
+        plugins: [
+            CustomPlugin.withConfig({ myOption: true }),
+        ],
+    });
+
+    // Retrieve the plugin instance later
+    const plugin = viewer.getPlugin(CustomPlugin);
+    ```
+  </Step>
+</Steps>
+
+## Configurable plugins
+
+For plugins with configuration, you can extend `AbstractConfigurablePlugin` instead of `AbstractPlugin`. This base class validates the config object and provides an `updateConfig()` helper.
+
+```javascript
+import { AbstractConfigurablePlugin } from '@photo-sphere-viewer/core';
+
+export class CustomPlugin extends AbstractConfigurablePlugin {
+    static id = 'custom-plugin';
+
+    static defaultConfig = {
+        speed: '2rpm',
+        enabled: true,
+    };
+
+    static withConfig(config) {
+        return [CustomPlugin, config];
+    }
+
+    constructor(viewer, config) {
+        super(viewer, config);
+        // this.config is now the merged config
+    }
+
+    init() { /* ... */ }
+
+    destroy() {
+        super.destroy();
+    }
+}
+```
+
+## Typed events
+
+Your plugin is an `EventTarget`. You can dispatch events with `this.dispatchEvent()` and users listen with `plugin.addEventListener()`.
+
+In TypeScript you can fully type your events using `TypedEvent`:
+
+```typescript
+import { AbstractPlugin, TypedEvent } from '@photo-sphere-viewer/core';
+
+/**
+ * Step 1 — declare the event class
+ */
+export class CustomPluginEvent extends TypedEvent<CustomPlugin> {
+    static override readonly type = 'custom-event';
+    override type: 'custom-event';
+
+    constructor(public readonly value: boolean) {
+        super(CustomPluginEvent.type);
+    }
+}
+
+/**
+ * Step 2 — declare the union type of all events
+ */
+export type CustomPluginEvents = CustomPluginEvent;
+
+/**
+ * Step 3 — pass the union type to AbstractPlugin
+ */
+export class CustomPlugin extends AbstractPlugin<CustomPluginEvents> {
+    method() {
+        // dispatch a typed event
+        this.dispatchEvent(new CustomPluginEvent(true));
+    }
+}
+
+/**
+ * Step 4 — subscribe with full type inference
+ */
+viewer.getPlugin(CustomPlugin)
+    .addEventListener(CustomPluginEvent.type, ({ value, target }) => {
+        // value is typed as boolean
+        // target is typed as CustomPlugin
+    });
+```
+
+## Custom navbar buttons
+
+Plugins can add buttons to the navbar by extending `AbstractButton`.
+
+### Creating a button
+
+```javascript
+import { AbstractButton } from '@photo-sphere-viewer/core';
+
+export class CustomButton extends AbstractButton {
+    static id = 'custom-button';
+
+    constructor(navbar) {
+        super(navbar, {
+            className: 'custom-button-class',
+            icon: '<svg>...</svg>',   // SVG string
+            collapsable: true,         // collapse to menu on small screens
+            tabbable: true,            // keyboard-accessible
+        });
+
+        // get the plugin instance
+        this.plugin = this.viewer.getPlugin('custom-plugin');
+    }
+
+    destroy() {
+        super.destroy();
+    }
+
+    isSupported() {
+        // return false to hide the button
+        return !!this.plugin;
+    }
+
+    onClick() {
+        this.plugin.doSomething();
+    }
+}
+```
+
+The `super()` call accepts the following options:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `className` | `string` | — | CSS class added to the button element |
+| `icon` | `string` | — | SVG markup for the default icon |
+| `iconActive` | `string` | `icon` | SVG markup for the active-state icon |
+| `collapsable` | `boolean` | `false` | Collapse into a menu on small screens |
+| `tabbable` | `boolean` | `true` | Make the button keyboard-focusable |
+
+### Registering the button
+
+Call `registerButton` in your plugin's main file. This makes the button available but does not add it to the navbar automatically — the user must include it in their `navbar` configuration.
+
+```javascript
+import { registerButton } from '@photo-sphere-viewer/core';
+import { CustomButton } from './CustomButton';
+
+registerButton(CustomButton);
+```
+
+### Icon best practices
+
+<Tip>
+  For the icon to inherit the navbar color correctly, use `fill="currentColor"` and/or `stroke="currentColor"` in your SVG.
+</Tip>
+
+Bundle SVG files as strings using the rollup `string` plugin:
+
+```javascript
+// rollup.config.js
+require('rollup-plugin-string').string({
+    include: ['**/*.svg'],
+});
+```
+
+```javascript
+import iconContent from './icon.svg';
+```
+
+## Packaging
+
+Use [rollup.js](https://rollupjs.org) to build distributable CJS and ESM bundles. Mark `three` and `@photo-sphere-viewer/core` as external so they are not bundled.
+
+```javascript
+// rollup.config.js
+export default {
+    input: 'src/index.js',
+    output: [
+        {
+            file: 'dist/index.cjs',
+            format: 'cjs',
+            sourcemap: true,
+        },
+        {
+            file: 'dist/index.module.js',
+            format: 'es',
+            sourcemap: true,
+        },
+    ],
+    external: [
+        'three',
+        '@photo-sphere-viewer/core',
+    ],
+};
+```
+
+### CSS / SCSS
+
+If your plugin has custom styles, import the stylesheet in your main JavaScript file and add the PostCSS plugin to your rollup config:
+
+```javascript
+require('rollup-plugin-postcss')({
+    extract: true,
+    sourceMap: true,
+    use: ['sass'],
+});
+```
+
+### `package.json`
+
+Expose both the CJS and ESM entry points so bundlers can pick the best format:
+
+```json
+{
+    "name": "photo-sphere-viewer-custom-plugin",
+    "version": "1.0.0",
+    "main": "index.cjs",
+    "module": "index.module.js",
+    "style": "index.css",
+    "dependencies": {
+        "@photo-sphere-viewer/core": "^5.0.0"
+    }
+}
+```
+
+## Naming and publishing
+
+If you intend to publish your plugin on npm, follow these naming conventions:
+
+- Class name: `[[Name]]Plugin`
+- npm package name: `photo-sphere-viewer-[[name]]-plugin`
+
+Once published you can open a PR to add it to the [third-party plugins](/plugins/overview) list.

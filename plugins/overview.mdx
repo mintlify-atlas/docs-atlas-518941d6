@@ -1,0 +1,158 @@
+---
+title: "Plugins overview"
+description: "Extend Photo Sphere Viewer with official plugins for markers, virtual tours, maps, galleries, and more."
+---
+
+Plugins extend Photo Sphere Viewer with new features. They can access all internal viewer APIs and the Three.js renderer. Official plugins are published as separate npm packages under the `@photo-sphere-viewer/` scope.
+
+## Available plugins
+
+<CardGroup cols={2}>
+  <Card title="Markers" icon="map-pin" href="/plugins/markers">
+    Display images, HTML, SVG shapes, polygons, and polylines on the panorama with optional tooltips and click events.
+  </Card>
+  <Card title="Virtual tour" icon="route" href="/plugins/virtual-tour">
+    Link multiple panoramas together into an explorable virtual tour with navigation arrows and GPS support.
+  </Card>
+  <Card title="Gallery" icon="images" href="/plugins/gallery">
+    Show a thumbnail gallery at the bottom of the viewer so users can navigate between panoramas.
+  </Card>
+  <Card title="Map" icon="map" href="/plugins/map">
+    Display a custom image map overlay showing the viewer's current position and optional hotspots.
+  </Card>
+  <Card title="Plan" icon="compass" href="/plugins/plan">
+    Show a geographic map (OpenStreetMap or custom tile layer) with the panorama's GPS position.
+  </Card>
+  <Card title="Autorotate" icon="rotate-cw" href="/plugins/autorotate">
+    Automatically rotate the panorama after a period of inactivity.
+  </Card>
+  <Card title="Compass" icon="navigation" href="/plugins/compass">
+    Show a compass overlay indicating the current viewing direction.
+  </Card>
+  <Card title="Gyroscope" icon="smartphone" href="/plugins/gyroscope">
+    Use device gyroscope data to control the viewing direction on mobile devices.
+  </Card>
+  <Card title="Stereo" icon="glasses" href="/plugins/stereo">
+    Display the panorama in stereoscopic VR mode for use with headsets.
+  </Card>
+  <Card title="Video" icon="play" href="/plugins/video">
+    Control playback of video panoramas loaded with the equirectangular-video or cubemap-video adapters.
+  </Card>
+  <Card title="Overlays" icon="layers" href="/plugins/overlays">
+    Add static or video overlay images on top of the panorama.
+  </Card>
+  <Card title="Resolution" icon="settings" href="/plugins/resolution">
+    Allow users to switch between multiple resolutions of the same panorama.
+  </Card>
+  <Card title="Settings" icon="sliders" href="/plugins/settings">
+    Add a configurable settings panel to the viewer toolbar.
+  </Card>
+  <Card title="Visible range" icon="eye" href="/plugins/visible-range">
+    Restrict the yaw, pitch, and zoom ranges the user can navigate to.
+  </Card>
+</CardGroup>
+
+## Installation
+
+Each plugin is a separate package. Install the one you need:
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/markers-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/markers-plugin
+```
+
+</CodeGroup>
+
+Some plugins also require a CSS file. Import it alongside the JavaScript module.
+
+<CodeGroup>
+
+```html CDN (importmap)
+<head>
+    <!-- stylesheet for the plugin -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin/index.min.css" />
+</head>
+
+<script type="importmap">
+    {
+        "imports": {
+            "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js",
+            "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+            "@photo-sphere-viewer/markers-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin/index.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
+
+    const viewer = new Viewer({
+        plugins: [
+            MarkersPlugin,
+        ],
+    });
+</script>
+```
+
+```javascript npm + build tool
+import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
+import '@photo-sphere-viewer/markers-plugin/index.css';
+
+const viewer = new Viewer({
+    plugins: [
+        MarkersPlugin,
+    ],
+});
+```
+
+</CodeGroup>
+
+## Using a plugin
+
+Pass the plugin class to the `plugins` array when creating the `Viewer`. Plugins that accept configuration use the static `withConfig` method:
+
+```javascript
+const viewer = new Viewer({
+    plugins: [
+        PluginA,
+        PluginB.withConfig({
+            option1: 'foo',
+            option2: 'bar',
+        }),
+    ],
+});
+```
+
+### Accessing the plugin instance
+
+After initialization, retrieve the plugin instance with `getPlugin` to call methods and subscribe to events:
+
+```javascript
+const markersPlugin = viewer.getPlugin(MarkersPlugin);
+
+markersPlugin.addMarker(/* ... */);
+
+markersPlugin.addEventListener('select-marker', ({ marker }) => {
+    console.log(`Clicked marker: ${marker.id}`);
+});
+```
+
+### Updating options at runtime
+
+Some plugins support updating their configuration after initialization using `setOption` or `setOptions`. Each plugin's documentation notes which options are updatable:
+
+```javascript
+markersPlugin.setOption('gotoMarkerSpeed', '3rpm');
+
+markersPlugin.setOptions({
+    gotoMarkerSpeed: '3rpm',
+    clickEventOnMarker: true,
+});
+```

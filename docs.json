@@ -1,122 +1,94 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Photo Sphere Viewer",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#599fe6",
+    "light": "#8acbe7",
+    "dark": "#599fe6"
   },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Guides",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "development"
-            ]
-          },
-          {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
-          }
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
+  "favicon": "https://media.brand.dev/b6dda509-3b60-4627-98a3-317b292aa90f.png",
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "https://media.brand.dev/b6dda509-3b60-4627-98a3-317b292aa90f.png",
+    "dark": "https://media.brand.dev/b6dda509-3b60-4627-98a3-317b292aa90f.png"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
     "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "type": "github",
+      "href": "https://github.com/mistic100/Photo-Sphere-Viewer"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/mistic100/Photo-Sphere-Viewer"
     }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "getting-started",
+              "migration"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "guide/configuration",
+              "guide/methods",
+              "guide/events",
+              "guide/navbar",
+              "guide/style"
+            ]
+          },
+          {
+            "group": "Adapters",
+            "pages": [
+              "adapters/overview",
+              "adapters/equirectangular",
+              "adapters/equirectangular-tiles",
+              "adapters/equirectangular-video",
+              "adapters/cubemap",
+              "adapters/cubemap-tiles",
+              "adapters/cubemap-video",
+              "adapters/dual-fisheye"
+            ]
+          },
+          {
+            "group": "Plugins",
+            "pages": [
+              "plugins/overview",
+              "plugins/markers",
+              "plugins/virtual-tour",
+              "plugins/gallery",
+              "plugins/map",
+              "plugins/plan",
+              "plugins/autorotate",
+              "plugins/compass",
+              "plugins/gyroscope",
+              "plugins/stereo",
+              "plugins/video",
+              "plugins/overlays",
+              "plugins/resolution",
+              "plugins/settings",
+              "plugins/visible-range",
+              "plugins/writing-a-plugin"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "guide/frameworks",
+              "guide/development"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

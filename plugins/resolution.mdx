@@ -1,0 +1,111 @@
+---
+title: "Resolution plugin"
+description: "Let users switch between multiple resolution variants of the same panorama through the settings panel."
+---
+
+The Resolution plugin adds a resolution selector to the viewer's settings panel. It requires the [Settings plugin](/plugins/settings).
+
+<Warning>
+  The Resolution plugin is not compatible with the Gallery plugin.
+</Warning>
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/resolution-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/resolution-plugin
+```
+
+</CodeGroup>
+
+## Usage
+
+Load the Settings plugin before the Resolution plugin, then provide the list of available resolutions.
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { SettingsPlugin } from '@photo-sphere-viewer/settings-plugin';
+import { ResolutionPlugin } from '@photo-sphere-viewer/resolution-plugin';
+
+const viewer = new Viewer({
+    panorama: 'sphere.jpg',
+    plugins: [
+        SettingsPlugin,
+        ResolutionPlugin.withConfig({
+            defaultResolution: 'SD',
+            resolutions: [
+                {
+                    id: 'SD',
+                    label: 'Small',
+                    panorama: 'sphere_small.jpg',
+                },
+                {
+                    id: 'HD',
+                    label: 'Normal',
+                    panorama: 'sphere.jpg',
+                },
+            ],
+        }),
+    ],
+});
+```
+
+## Configuration
+
+<ParamField path="resolutions" type="object[]" required>
+  List of available resolutions. Not updatable — use `setResolutions()` instead.
+
+  Each resolution object has the following properties:
+
+  | Property | Type | Description |
+  |---|---|---|
+  | `id` | `string` | Unique identifier |
+  | `label` | `string` | Display name shown in the settings panel |
+  | `panorama` | `any` | Panorama value passed to `viewer.setPanorama()` |
+  | `panoData` | `PanoData` | Optional panorama data |
+</ParamField>
+
+<ParamField path="defaultResolution" type="string">
+  ID of the resolution to load initially. Falls back to the first resolution if not set.
+
+  <Warning>
+    This setting is ignored when a `panorama` is already configured on the viewer.
+  </Warning>
+</ParamField>
+
+<ParamField path="showBadge" type="boolean" default="true">
+  Show the current resolution ID as a badge on the settings button. Not updatable after init.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      resolution: 'Quality',
+  }
+  ```
+</ParamField>
+
+## Methods
+
+#### `setResolutions(resolutions, defaultResolution?)`
+
+Replaces the available resolutions. Optionally pass a new `defaultResolution` ID.
+
+## Events
+
+#### `resolution-changed`
+
+Triggered when the user selects a different resolution.
+
+```javascript
+resolutionPlugin.addEventListener('resolution-changed', ({ resolutionId }) => {
+    console.log(`Current resolution: ${resolutionId}`);
+});
+```

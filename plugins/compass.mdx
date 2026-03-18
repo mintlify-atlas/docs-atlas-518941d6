@@ -1,0 +1,110 @@
+---
+title: "Compass plugin"
+description: "Display a compass overlay showing the current field of view and optional hotspots on the panorama."
+---
+
+The Compass plugin adds a compass widget to the viewer that represents which portion of the sphere is currently visible. It can display hotspots and optionally allow clicking to rotate the viewer.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/compass-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/compass-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/compass-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { CompassPlugin } from '@photo-sphere-viewer/compass-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        CompassPlugin.withConfig({
+            hotspots: [
+                { yaw: '45deg' },
+                { yaw: '60deg', color: 'red' },
+            ],
+        }),
+    ],
+});
+```
+
+<Tip>
+  North is always at `yaw = 0`. To change where north points, use `panoData.poseHeading` or the `sphereCorrection.pan` viewer option.
+</Tip>
+
+## Configuration
+
+<ParamField path="size" type="string" default="'120px'">
+  Size of the compass widget. Accepts any CSS unit: `px`, `rem`, `vh`, etc. Updatable.
+</ParamField>
+
+<ParamField path="position" type="string" default="'top left'">
+  Position of the widget. Accepts combinations of `top`, `center`, `bottom` and `left`, `center`, `right`. Updatable.
+</ParamField>
+
+<ParamField path="navigation" type="boolean" default="true">
+  Allow clicking on the compass to rotate the viewer. Updatable.
+</ParamField>
+
+<ParamField path="resetPitch" type="boolean" default="true">
+  Reset the viewer pitch to `defaultPitch` when navigating via the compass. Updatable.
+</ParamField>
+
+<ParamField path="hotspots" type="CompassHotspot[]" default="null">
+  Small dots displayed on the compass. Each hotspot requires a position (`yaw`/`pitch` or `textureX`/`textureY`) and an optional `color` that overrides `hotspotColor`. Updatable.
+
+  <Tip>
+    Markers can also appear on the compass by setting a `compass` data property on the marker to `true` or a specific color string.
+  </Tip>
+</ParamField>
+
+<ParamField path="backgroundSvg" type="string" default="built-in SVG">
+  Custom SVG string used as the compass background. Must be square. Updatable.
+</ParamField>
+
+<ParamField path="coneColor" type="string" default="'rgba(255, 255, 255, 0.2)'">
+  Color of the cone representing the current field of view. Updatable.
+</ParamField>
+
+<ParamField path="navigationColor" type="string" default="'rgba(255, 0, 0, 0.2)'">
+  Color of the cone shown while clicking to navigate. Updatable.
+</ParamField>
+
+<ParamField path="hotspotColor" type="string" default="'rgba(0, 0, 0, 0.5)'">
+  Default color for hotspots that do not define their own `color`. Updatable.
+</ParamField>
+
+<ParamField path="className" type="string">
+  Additional CSS class(es) added to the compass element. Updatable.
+</ParamField>
+
+## Methods
+
+#### `setHotspots(hotspots)`
+
+Replaces the current hotspots.
+
+```javascript
+compassPlugin.setHotspots([
+    { yaw: '0deg' },
+    { yaw: '10deg', color: 'red' },
+]);
+```
+
+#### `clearHotspots()`
+
+Removes all hotspots.

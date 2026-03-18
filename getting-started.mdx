@@ -1,0 +1,142 @@
+---
+title: Getting started
+description: Install Photo Sphere Viewer and create your first 360° panorama viewer.
+---
+
+<Steps>
+  <Step title="Install the package">
+    Photo Sphere Viewer is available on npm and via CDN. The core package depends on [Three.js](https://threejs.org).
+
+    <CodeGroup>
+
+    ```bash npm
+    npm install @photo-sphere-viewer/core
+    ```
+
+    ```bash yarn
+    yarn add @photo-sphere-viewer/core
+    ```
+
+    ```bash CDN (jsDelivr)
+    <!-- No install needed — use the import map approach shown below -->
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      You can also [download the latest release](https://github.com/mistic100/Photo-Sphere-Viewer/releases) and host the files yourself.
+    </Note>
+  </Step>
+
+  <Step title="Add a container element">
+    The viewer renders inside a DOM element. Give it explicit dimensions — the viewer will fill the container completely.
+
+    ```html
+    <!-- for optimal display on high DPI devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- the viewer container must have a defined size -->
+    <div id="viewer" style="width: 100vw; height: 100vh;"></div>
+    ```
+  </Step>
+
+  <Step title="Initialize the viewer">
+    Import the `Viewer` class and point it at your container and panorama image.
+
+    <Tabs>
+      <Tab title="CDN (import map)">
+        Importing from a CDN requires an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) and a `type="module"` script tag.
+
+        ```html
+        <head>
+            <!-- for optimal display on high DPI devices -->
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css" />
+        </head>
+
+        <!-- the viewer container must have a defined size -->
+        <div id="viewer" style="width: 100vw; height: 100vh;"></div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+                    "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import { Viewer } from '@photo-sphere-viewer/core';
+
+            const viewer = new Viewer({
+                container: document.querySelector('#viewer'),
+                panorama: 'path/to/panorama.jpg',
+            });
+        </script>
+        ```
+      </Tab>
+      <Tab title="npm / bundler">
+        When using a bundler (Vite, webpack, Rollup, etc.), import the CSS alongside the JS.
+
+        ```html
+        <head>
+            <!-- for optimal display on high DPI devices -->
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+
+        <!-- the viewer container must have a defined size -->
+        <div id="viewer" style="width: 100vw; height: 100vh;"></div>
+        ```
+
+        ```javascript
+        import { Viewer } from '@photo-sphere-viewer/core';
+        import '@photo-sphere-viewer/core/index.css';
+
+        const viewer = new Viewer({
+            container: document.querySelector('#viewer'),
+            panorama: 'path/to/panorama.jpg',
+        });
+        ```
+
+        <Tip>
+          Import `@photo-sphere-viewer/core/index.css` using whichever method your tooling supports (CSS import, PostCSS, etc.).
+        </Tip>
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## Notes on the panorama image
+
+The `panorama` option expects an [equirectangular projection](https://en.wikipedia.org/wiki/Equirectangular_projection) image by default. This is the standard output format from 360° cameras.
+
+<Note>
+  If your image does not cover a full 360°×180° sphere, it will appear deformed. Fix this by providing cropping data via the equirectangular adapter options.
+</Note>
+
+Other panorama formats are supported through adapters:
+
+- Cubemap faces
+- Tiled equirectangular and cubemap images
+- Equirectangular and cubemap video
+
+See [Adapters overview](/adapters/overview) for details.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="sliders" href="/guide/configuration">
+    Explore all viewer options: zoom, position, navbar, caching, and more.
+  </Card>
+  <Card title="Adapters" icon="plug" href="/adapters/overview">
+    Load cubemaps, tiled images, and video panoramas.
+  </Card>
+  <Card title="Plugins" icon="puzzle-piece" href="/plugins/overview">
+    Add markers, virtual tours, maps, and more.
+  </Card>
+  <Card title="Methods &amp; events" icon="terminal" href="/guide/methods">
+    Programmatically control the viewer and react to user interactions.
+  </Card>
+</CardGroup>

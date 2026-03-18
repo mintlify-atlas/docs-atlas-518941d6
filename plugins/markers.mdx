@@ -1,0 +1,533 @@
+---
+title: "Markers plugin"
+description: "Display images, HTML elements, SVG shapes, polygons, and polylines on the panorama with tooltips, click events, and dynamic updates."
+---
+
+The Markers plugin lets you place points of interest on the panorama. Markers can be images, HTML content, SVG shapes, or geographic polygons and polylines. Each marker supports tooltips, descriptions, visibility controls, and click events.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/markers-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/markers-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/markers-plugin/index.css` using your preferred method, or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        MarkersPlugin.withConfig({
+            markers: [
+                {
+                    id: 'new-marker',
+                    position: { yaw: '45deg', pitch: '0deg' },
+                    image: 'assets/pin-red.png',
+                    size: { width: 32, height: 32 },
+                },
+            ],
+        }),
+    ],
+});
+
+const markersPlugin = viewer.getPlugin(MarkersPlugin);
+
+markersPlugin.addEventListener('select-marker', ({ marker }) => {
+    markersPlugin.updateMarker({
+        id: marker.id,
+        image: 'assets/pin-blue.png',
+    });
+});
+```
+
+## Marker types
+
+Every marker definition requires exactly one type property. The available types are:
+
+<Tabs>
+  <Tab title="image / imageLayer">
+    ### `image`
+
+    Renders a flat image above the viewer. Requires `size`.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        image: 'pin-red.png',
+        position: { yaw: 0, pitch: 0 },
+        size: { width: 32, height: 32 },
+    }
+    ```
+
+    ### `imageLayer`
+
+    Renders an image inside the panorama scene for natural movement and depth. Can be positioned with a single `position` + `size`, or by providing four corner coordinates.
+
+    ```javascript
+    // Single position + size
+    {
+        id: 'marker-1',
+        imageLayer: 'pin-red.png',
+        position: { yaw: 0, pitch: 0 },
+        size: { width: 32, height: 32 },
+    }
+
+    // Four corner positions (clockwise from top-left)
+    {
+        id: 'marker-2',
+        imageLayer: 'billboard.png',
+        position: [
+            { yaw: -0.2, pitch: 0.2 },
+            { yaw: 0.2, pitch: 0.2 },
+            { yaw: 0.2, pitch: -0.2 },
+            { yaw: -0.2, pitch: -0.2 },
+        ],
+    }
+    ```
+
+    <Tip>
+      `imageLayer` renders inside the 3D scene while `image` renders flat above the viewer. Use `imageLayer` for a more natural appearance.
+    </Tip>
+  </Tab>
+  <Tab title="videoLayer">
+    ### `videoLayer`
+
+    Renders a video inside the panorama scene. Positioned the same way as `imageLayer`. Supports the `chromaKey` option for green-screen effects.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        videoLayer: 'intro.mp4',
+        position: { yaw: 0, pitch: 0 },
+        size: { width: 600, height: 400 },
+    }
+    ```
+  </Tab>
+  <Tab title="html / element">
+    ### `html`
+
+    Renders arbitrary HTML content. Defining `size` is recommended.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        html: '<strong>Click here</strong>',
+        position: { yaw: 0, pitch: 0 },
+        size: { width: 100, height: 30 },
+    }
+    ```
+
+    ### `element`
+
+    Uses an existing DOM element as the marker.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        element: document.querySelector('#my-marker'),
+        position: { yaw: 0, pitch: 0 },
+    }
+    ```
+
+    ### `elementLayer`
+
+    Like `element`, but rendered inside the 3D scene. Accepts Web Components — if your component exposes an `updateMarker()` method, the plugin calls it on each render with `marker`, `position`, `viewerPosition`, `zoomLevel`, and `viewerSize`.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        elementLayer: getYoutubeIframe(videoId),
+        position: { yaw: 0, pitch: 0 },
+        rotation: { yaw: '10deg' },
+    }
+    ```
+  </Tab>
+  <Tab title="SVG shapes">
+    ### `square`
+
+    ```javascript
+    {
+        id: 'marker-1',
+        square: 10,
+        position: { yaw: 0, pitch: 0 },
+    }
+    ```
+
+    ### `rect`
+
+    ```javascript
+    {
+        id: 'marker-1',
+        rect: [10, 5],  // or { width: 10, height: 5 }
+        position: { yaw: 0, pitch: 0 },
+    }
+    ```
+
+    ### `circle`
+
+    ```javascript
+    {
+        id: 'marker-1',
+        circle: 10,  // radius
+        position: { yaw: 0, pitch: 0 },
+    }
+    ```
+
+    ### `ellipse`
+
+    ```javascript
+    {
+        id: 'marker-1',
+        ellipse: [10, 5],  // or { rx: 10, ry: 5 }
+        position: { yaw: 0, pitch: 0 },
+    }
+    ```
+
+    ### `path`
+
+    SVG path string. The origin `(0,0)` is placed at the defined `position`.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        path: 'M0,0 L60,60 L60,0 L0,60 L0,0',
+        position: { yaw: 0, pitch: 0 },
+    }
+    ```
+  </Tab>
+  <Tab title="Polygons & polylines">
+    ### `polygon`
+
+    Array of points in spherical coordinates (radians or degrees). Supports holes via nested arrays (same syntax as GeoJSON polygons — hole coordinates must be in reverse order).
+
+    ```javascript
+    // Simple polygon
+    {
+        id: 'marker-1',
+        polygon: [[0.2, 0.4], [0.9, 1.1], [1.5, 0.7]],
+    }
+
+    // Polygon with a hole
+    {
+        id: 'marker-2',
+        polygon: [
+            [[0.2, 0.4], [0.9, 1.1], [1.5, 0.7]],
+            [[0.3, 0.5], [1.4, 0.8], [0.8, 1.0]], // hole (reverse order)
+        ],
+    }
+    ```
+
+    ### `polygonPixels`
+
+    Same as `polygon` but uses pixel coordinates on the panorama image. Supports the object syntax for cubemap faces.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        polygonPixels: [[100, 200], [150, 300], [300, 200]],
+    }
+    ```
+
+    ### `polyline` / `polylinePixels`
+
+    Like `polygon` / `polygonPixels` but generates an open line.
+
+    ```javascript
+    {
+        id: 'marker-1',
+        polyline: [[0.2, 0.4], [0.9, 1.1]],
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Plugin configuration
+
+<ParamField path="markers" type="MarkerConfig[]">
+  Initial list of markers. Not updatable after init — use the `setMarkers()` method instead.
+</ParamField>
+
+<ParamField path="defaultHoverScale" type="boolean | number | object" default="null">
+  Default hover scale applied to all markers. Set to `true` for 2× scale over 100 ms with a linear easing. Can be an object with `amount`, `duration`, and `easing` fields. Override per marker with `hoverScale`.
+</ParamField>
+
+<ParamField path="gotoMarkerSpeed" type="string | number" default="'8rpm'">
+  Default animation speed for the `gotoMarker` method. Updatable.
+</ParamField>
+
+<ParamField path="clickEventOnMarker" type="boolean" default="false">
+  When `true`, a `click` event fires on the viewer in addition to the `select-marker` event. Updatable.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      markers: 'Markers',
+      markersList: 'Markers list',
+  }
+  ```
+</ParamField>
+
+## Marker options
+
+The following options apply when defining or updating a marker.
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the marker.
+</ParamField>
+
+<ParamField path="position" type="{ yaw, pitch } | { textureX, textureY } | array" required>
+  Position in spherical coordinates (radians/degrees) or texture coordinates (pixels). For `imageLayer` and `videoLayer`, you can supply an array of four corner positions instead. Ignored for polygons and polylines.
+</ParamField>
+
+<ParamField path="size" type="{ width, height }">
+  Size of the marker in pixels. Required for `image` and `imageLayer`; recommended for `html` and `element`. Ignored for polygons and polylines.
+</ParamField>
+
+<ParamField path="rotation" type="string | number | { yaw, pitch, roll }">
+  Rotation applied to the marker in degrees or radians. For 2D markers only `roll` applies; for 3D layer markers all axes apply (ignored when `position` is an array). Ignored for polygons and polylines.
+</ParamField>
+
+<ParamField path="scale" type="number[] | { zoom: number[], yaw: number[] }">
+  Scale the marker based on zoom level and/or horizontal angle. Each sub-array is `[scale at min, scale at max]`. Ignored for polygons, polylines, and layers.
+
+  ```javascript
+  scale: {
+      zoom: [0.5, 1],   // half size at minimum zoom
+      yaw: [1, 1.5],    // 1.5× size at the side of the screen
+  }
+  ```
+</ParamField>
+
+<ParamField path="hoverScale" type="boolean | number | object" default="null">
+  Override the global `defaultHoverScale` for this marker. Set to `false` to disable scaling. Accepts the same shape as `defaultHoverScale`. Ignored for polygons, polylines, and layers.
+</ParamField>
+
+<ParamField path="opacity" type="number" default="1">
+  Opacity of the marker.
+</ParamField>
+
+<ParamField path="zIndex" type="number" default="1">
+  Stacking order. Note: `imageLayer`/`videoLayer` markers always render first, then polygons/polylines, then standard markers.
+</ParamField>
+
+<ParamField path="className" type="string">
+  CSS class(es) added to the marker element. Ignored for `imageLayer` and `videoLayer`.
+</ParamField>
+
+<ParamField path="style" type="object">
+  CSS properties set on the marker element (e.g. `backgroundColor`, `cursor`). For `imageLayer` and `videoLayer` only `cursor` is applicable.
+
+  ```javascript
+  style: {
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      cursor: 'help',
+  }
+  ```
+</ParamField>
+
+<ParamField path="svgStyle" type="object">
+  SVG properties set on polygon, polyline, and SVG shape markers (e.g. `fill`, `stroke`, `strokeWidth`).
+
+  ```javascript
+  svgStyle: {
+      fill: 'rgba(0, 0, 0, 0.5)',
+      stroke: '#ff0000',
+      strokeWidth: '2px',
+  }
+  ```
+</ParamField>
+
+<ParamField path="chromaKey" type="object" default="{ enabled: false }">
+  Make a color transparent (green screen / blue screen). Only applicable to `imageLayer` and `videoLayer`.
+
+  ```javascript
+  chromaKey: {
+      enabled: true,
+      color: 0x00ff00,       // or { r: 0, g: 255, b: 0 }
+      similarity: 0.2,
+      smoothness: 0.2,
+  }
+  ```
+</ParamField>
+
+<ParamField path="anchor" type="string" default="'center center'">
+  Placement of the marker relative to its `position`. Accepts any CSS position string such as `'bottom center'` or `'20% 80%'`. Ignored for polygons and polylines.
+</ParamField>
+
+<ParamField path="zoomLvl" type="number">
+  Zoom level applied when `gotoMarker()` is called or when the marker is clicked in the list. If not set, the current zoom level is preserved.
+</ParamField>
+
+<ParamField path="visible" type="boolean" default="true">
+  Initial visibility of the marker.
+</ParamField>
+
+<ParamField path="tooltip" type="string | object" default="{ content: null, position: 'top center', trigger: 'hover' }">
+  Tooltip shown when hovering (or clicking) the marker. Pass a string for a simple tooltip or an object to configure position, class, and trigger.
+
+  ```javascript
+  // Simple
+  tooltip: 'This is a marker'
+
+  // Custom position
+  tooltip: {
+      content: 'This is a marker',
+      position: 'bottom left',
+  }
+
+  // Click trigger with custom class
+  tooltip: {
+      content: 'This is a marker',
+      className: 'custom-tooltip',
+      trigger: 'click',
+  }
+  ```
+
+  Accepted positions: combinations of `top`, `center`, `bottom` and `left`, `center`, `right`. Triggers: `hover`, `click`.
+</ParamField>
+
+<ParamField path="content" type="string">
+  HTML content displayed in the side panel when the marker is clicked.
+</ParamField>
+
+<ParamField path="listContent" type="string">
+  Name shown in the markers list. Falls back to the tooltip content if not set.
+</ParamField>
+
+<ParamField path="hideList" type="boolean" default="false">
+  Hide this marker from the markers list.
+</ParamField>
+
+<ParamField path="autoplay" type="boolean" default="true">
+  Autoplay for `videoLayer` markers.
+</ParamField>
+
+<ParamField path="data" type="any">
+  Arbitrary data attached to the marker, accessible in event handlers.
+</ParamField>
+
+## Methods
+
+#### `addMarker(properties)`
+
+Adds a new marker to the viewer.
+
+```javascript
+markersPlugin.addMarker({
+    id: 'new-marker',
+    position: { yaw: '45deg', pitch: '0deg' },
+    image: 'assets/pin-red.png',
+    size: { width: 32, height: 32 },
+});
+```
+
+#### `updateMarker(properties)`
+
+Updates a marker with new properties. The marker type cannot be changed.
+
+```javascript
+markersPlugin.updateMarker({
+    id: 'existing-marker',
+    image: 'assets/pin-blue.png',
+});
+```
+
+#### `removeMarker(id)` / `removeMarkers(ids)`
+
+Removes one or more markers by ID.
+
+#### `setMarkers(properties[])`
+
+Replaces all markers with a new set.
+
+#### `clearMarkers()`
+
+Removes all markers.
+
+#### `getMarker(id): Marker`
+
+Returns a marker by ID.
+
+#### `getCurrentMarker(): Marker`
+
+Returns the last marker clicked by the user.
+
+#### `gotoMarker(id, speed?): Promise`
+
+Animates the view to face a specific marker. Default speed is `8rpm`; pass `0` for an immediate jump.
+
+```javascript
+markersPlugin.gotoMarker('marker-1', '4rpm')
+    .then(() => { /* animation complete */ });
+```
+
+#### `hideMarker(id)` / `showMarker(id)` / `toggleMarker(id)`
+
+Changes the visibility of a single marker.
+
+#### `showMarkerTooltip(id)` / `hideMarkerTooltip(id)`
+
+Forces a marker's tooltip to be visible or hidden.
+
+#### `showAllTooltips()` / `hideAllTooltips()` / `toggleAllTooltips()`
+
+Controls the visibility of all tooltips at once.
+
+## Events
+
+#### `select-marker(marker, doubleClick, rightClick)`
+
+Fired when the user clicks a marker.
+
+```javascript
+markersPlugin.addEventListener('select-marker', ({ marker }) => {
+    console.log(`Clicked on marker ${marker.id}`);
+});
+```
+
+#### `unselect-marker(marker)`
+
+Fired when a previously selected marker is deselected (user clicks elsewhere).
+
+#### `marker-visibility(marker, visible)`
+
+Fired when a marker's visibility changes.
+
+```javascript
+markersPlugin.addEventListener('marker-visibility', ({ marker, visible }) => {
+    console.log(`Marker ${marker.id} is ${visible ? 'visible' : 'hidden'}`);
+});
+```
+
+#### `enter-marker(marker)` / `leave-marker(marker)`
+
+Fired when the cursor enters or leaves a marker.
+
+## Navbar buttons
+
+This plugin adds two buttons to the default navbar:
+
+- **`markers`** — toggles visibility of all markers
+- **`markersList`** — opens the markers list in the side panel
+
+<Note>
+  If you use a custom navbar, add these button identifiers to your navbar configuration manually.
+</Note>

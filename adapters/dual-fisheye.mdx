@@ -1,0 +1,45 @@
+---
+title: "Dual fisheye adapter"
+description: "Display raw dual-fisheye files produced by 360° cameras such as the Ricoh Theta Z1. Included in the core package."
+---
+
+"Dual fisheye" is the raw file format used by many 360° camera brands. Instead of a pre-stitched equirectangular image, the camera sensor data is stored as two circular fisheye projections side by side. This adapter stitches and remaps them onto the sphere at render time.
+
+<Warning>
+  This adapter is currently tested only against raw files from the Ricoh Theta Z1. It may evolve in the future to support other cameras. If you have sample files from another camera, please [open an issue](https://github.com/mistic100/Photo-Sphere-Viewer/issues).
+</Warning>
+
+## Installation
+
+The dual fisheye adapter is included in the core package. No additional installation is required.
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/core
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/core
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { DualFisheyeAdapter } from '@photo-sphere-viewer/core';
+
+const viewer = new Viewer({
+    adapter: DualFisheyeAdapter,
+    panorama: 'path/panorama.jpg',
+});
+```
+
+## Configuration
+
+<ParamField path="resolution" type="number" default="64">
+  The number of faces of the sphere geometry used to display the panorama. Higher values reduce deformations on straight lines at the cost of performance.
+
+  The actual number of faces is `resolution² / 2`.
+</ParamField>

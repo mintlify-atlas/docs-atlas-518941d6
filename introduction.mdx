@@ -1,0 +1,68 @@
+---
+title: Introduction
+description: Photo Sphere Viewer is a JavaScript library to display 360° sphere panoramas in the browser, built on Three.js.
+---
+
+Photo Sphere Viewer is an open-source JavaScript library for embedding interactive 360° panoramic viewers in web applications. It is built on [Three.js](https://threejs.org) and delivers smooth, hardware-accelerated WebGL rendering. The library follows a modular architecture: the core package provides the viewer, while adapters and plugins are installed separately.
+
+## Key features
+
+- **Equirectangular and cubemap support** — load standard equirectangular JPEGs, cubemap faces, tiled formats, and video panoramas via adapter packages
+- **Plugin system** — extend the viewer with official plugins for markers, virtual tours, galleries, maps, gyroscope, autorotation, and more
+- **TypeScript** — fully typed API including events, adapter configs, and plugin configs
+- **Three.js powered** — WebGL rendering with 60fps navigation and high-DPI support
+- **Modular packages** — install only what you need; all packages are scoped under `@photo-sphere-viewer/*`
+- **MIT license** — free to use in personal and commercial projects
+
+## Packages
+
+The library is split into focused packages. Install the ones you need.
+
+**Core**
+
+| Package | Description |
+|---------|-------------|
+| `@photo-sphere-viewer/core` | The `Viewer` class, core rendering, and base plugin/adapter infrastructure |
+
+**Adapters**
+
+| Package | Description |
+|---------|-------------|
+| `@photo-sphere-viewer/cubemap-adapter` | Load panoramas as cubemap faces |
+| `@photo-sphere-viewer/cubemap-tiles-adapter` | Tiled cubemap loading for large images |
+| `@photo-sphere-viewer/cubemap-video-adapter` | Cubemap video panoramas |
+| `@photo-sphere-viewer/equirectangular-tiles-adapter` | Tiled equirectangular loading |
+| `@photo-sphere-viewer/equirectangular-video-adapter` | Equirectangular video panoramas |
+
+**Plugins**
+
+| Package | Description |
+|---------|-------------|
+| `@photo-sphere-viewer/autorotate-plugin` | Automatic rotation with keypoints |
+| `@photo-sphere-viewer/compass-plugin` | Compass overlay |
+| `@photo-sphere-viewer/gallery-plugin` | Thumbnail gallery for multiple panoramas |
+| `@photo-sphere-viewer/gyroscope-plugin` | Device orientation / gyroscope control |
+| `@photo-sphere-viewer/markers-plugin` | Annotate panoramas with HTML, SVG, or image markers |
+| `@photo-sphere-viewer/resolution-plugin` | Switch between panorama resolutions |
+| `@photo-sphere-viewer/settings-plugin` | Settings panel for other plugins |
+| `@photo-sphere-viewer/stereo-plugin` | VR/stereoscopic rendering |
+| `@photo-sphere-viewer/video-plugin` | Controls for video panoramas |
+| `@photo-sphere-viewer/virtual-tour-plugin` | Connect panoramas into a navigable tour |
+| `@photo-sphere-viewer/visible-range-plugin` | Restrict the visible yaw/pitch range |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Getting started" icon="rocket" href="/getting-started">
+    Install the library and create your first panorama viewer.
+  </Card>
+  <Card title="Plugins overview" icon="puzzle-piece" href="/plugins/overview">
+    Browse the full list of official plugins and how to use them.
+  </Card>
+  <Card title="Adapters overview" icon="plug" href="/adapters/overview">
+    Learn how to load cubemaps, tiled images, and video panoramas.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/guide/configuration">
+    Explore all viewer options and how to configure them.
+  </Card>
+</CardGroup>

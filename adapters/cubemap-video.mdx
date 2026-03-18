@@ -1,0 +1,79 @@
+---
+title: "Cubemap video adapter"
+description: "Display 360° cubemap video panoramas in the equiangular cubemap (EAC) format used by YouTube, or as standard cubemap video grids."
+---
+
+The cubemap video adapter loads video files where each frame contains a 3×2 grid of cubemap faces, as used by YouTube for 360° videos.
+
+<Warning>
+  This adapter requires the [VideoPlugin](/plugins/video) to be enabled.
+</Warning>
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/cubemap-video-adapter
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/cubemap-video-adapter
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { CubemapVideoAdapter } from '@photo-sphere-viewer/cubemap-video-adapter';
+import { VideoPlugin } from '@photo-sphere-viewer/video-plugin';
+
+const viewer = new Viewer({
+    adapter: CubemapVideoAdapter,
+    panorama: {
+        source: 'path/video.mp4',
+    },
+    plugins: [VideoPlugin],
+});
+```
+
+<Note>
+  This adapter does not support pixel positions. Use `yaw` + `pitch` for all position references.
+</Note>
+
+## Adapter configuration
+
+<ParamField path="autoplay" type="boolean" default="false">
+  Automatically starts the video when the panorama is loaded.
+</ParamField>
+
+<ParamField path="muted" type="boolean" default="false">
+  Mutes the video by default.
+</ParamField>
+
+## Panorama options
+
+The `panorama` option and the `setPanorama()` method accept an object with the following fields.
+
+<ParamField path="source" type="string | MediaStream | HTMLVideoElement" required>
+  The video source. Can be:
+
+  - A URL string pointing to the video file. The video must not exceed 4096 pixels in either dimension.
+  - A `MediaStream` — for example, the feed from a USB 360° camera.
+  - An `HTMLVideoElement` — when you need full control over video playback externally.
+</ParamField>
+
+<ParamField path="equiangular" type="boolean" default="true">
+  Set to `true` when using an equiangular cubemap (EAC) — the format used by YouTube. Set to `false` when using a standard cubemap layout.
+</ParamField>
+
+## Video format
+
+Each frame of the video must contain all six cube faces arranged in a 3-column × 2-row grid:
+
+| Left | Front | Right |
+|---|---|---|
+| Bottom | Back | Top |
+
+This is the layout produced by YouTube's 360° video pipeline. If your source uses a different layout, ensure your video is re-encoded to match before using this adapter.

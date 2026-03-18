@@ -1,0 +1,317 @@
+---
+title: "Configuration"
+description: "All configuration options for Photo Sphere Viewer, from container setup to advanced rendering parameters."
+---
+
+<Tip>
+Photo Sphere Viewer uses angles extensively. You can express them as radians with a plain number (`3.5`) or in degrees with the `deg` suffix (`'55deg'`).
+</Tip>
+
+## Standard options
+
+<ParamField path="container" type="HTMLElement | string" required>
+  HTML element which will contain the panorama, or an identifier string targeting the element.
+
+  ```javascript
+  // By element reference
+  container: document.querySelector('.viewer');
+
+  // By class name (targets [class="viewer"])
+  container: '.viewer';
+
+  // By id (targets [id="viewer"])
+  container: 'viewer';
+  ```
+</ParamField>
+
+<ParamField path="panorama" type="*" required>
+  Path to the panorama. Must be a single URL when using the default equirectangular adapter. Other adapters support different value shapes.
+</ParamField>
+
+<ParamField path="adapter" default="equirectangular">
+  Which [adapter](/adapters/overview) is used to load the panorama.
+</ParamField>
+
+<ParamField path="plugins" type="array">
+  List of enabled [plugins](/plugins). Each entry is either a plugin constructor or a tuple of `[PluginConstructor, options]`.
+</ParamField>
+
+<ParamField path="caption" type="string">
+  Text displayed in the navbar. HTML is allowed. Has no visible effect when the navbar is disabled.
+</ParamField>
+
+<ParamField path="description" type="string">
+  Text displayed in the side panel when the user clicks the "i" button. HTML is allowed.
+</ParamField>
+
+<ParamField path="downloadUrl" type="string" default="panorama (equirectangular)">
+  File that will be downloaded when the user clicks the download button. Particularly useful for adapters that use multiple files, such as the CubemapAdapter or EquirectangularTilesAdapter.
+</ParamField>
+
+<ParamField path="downloadName" type="string" default="downloadUrl filename">
+  Overrides the filename used when downloading the panorama. Mainly useful when the panorama is provided as a base64 string.
+</ParamField>
+
+<ParamField path="size" type="{ width: integer, height: integer }">
+  Final size of the panorama container. By default the size of `container` is used and followed when the element is resized.
+</ParamField>
+
+<ParamField path="navbar">
+  Configuration of the [navbar](/guide/navbar).
+</ParamField>
+
+<ParamField path="minFov" type="integer" default="30">
+  Minimal field of view (maximum zoom level). Must be between `1` and `maxFov`.
+</ParamField>
+
+<ParamField path="maxFov" type="integer" default="90">
+  Maximal field of view (minimum zoom level). Must be between `minFov` and `180`.
+</ParamField>
+
+<ParamField path="defaultZoomLvl" type="integer" default="50">
+  Initial zoom level, between `0` (for `maxFov`) and `100` (for `minFov`).
+</ParamField>
+
+<ParamField path="fisheye" type="boolean | double" default="false">
+  Enables the fisheye effect. Pass `true` (equivalent to strength `1.0`) or a numeric strength value.
+
+  <Warning>
+    Fisheye mode can have side-effects on marker rendering and some adapters.
+  </Warning>
+</ParamField>
+
+<ParamField path="defaultYaw" type="double | string" default="0">
+  Initial horizontal angle, between `0` and `2π`.
+</ParamField>
+
+<ParamField path="defaultPitch" type="double | string" default="0">
+  Initial vertical angle, between `-π/2` and `π/2`.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Various text strings used throughout the viewer. Override any key to translate or customise the UI.
+
+  ```javascript
+  lang: {
+    zoom: 'Zoom',
+    zoomOut: 'Zoom out',
+    zoomIn: 'Zoom in',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+    moveLeft: 'Move left',
+    moveRight: 'Move right',
+    description: 'Description',
+    download: 'Download',
+    fullscreen: 'Fullscreen',
+    loading: 'Loading...',
+    menu: 'Menu',
+    close: 'Close',
+    twoFingers: 'Use two fingers to navigate',
+    ctrlZoom: 'Use ctrl + scroll to zoom the image',
+    loadError: 'The panorama cannot be loaded',
+    webglError: 'Your browser does not seem to support WebGL',
+  }
+  ```
+</ParamField>
+
+<ParamField path="loadingImg" type="string">
+  Path to an image displayed in the centre of the loader.
+</ParamField>
+
+<ParamField path="loadingTxt" type="string" default="lang.loading">
+  Text displayed in the centre of the loader. Only used when `loadingImg` is not set.
+</ParamField>
+
+<ParamField path="mousewheel" type="boolean" default="true">
+  Enables zoom with the mouse wheel.
+</ParamField>
+
+<ParamField path="mousemove" type="boolean" default="true">
+  Enables panorama rotation with click-and-drag or a finger swipe on touch screens.
+</ParamField>
+
+<ParamField path="keyboard" type="boolean | 'fullscreen' | 'always'" default="'fullscreen'">
+  Enables keyboard controls. `'fullscreen'` (same as `true`) activates controls only while in fullscreen mode. `'always'` activates controls at all times.
+
+  <Warning>
+    When set to `'always'`, key events are listened globally on the page and can conflict with other interactive elements.
+  </Warning>
+</ParamField>
+
+<ParamField path="mousewheelCtrlKey" type="boolean" default="false">
+  Requires holding Ctrl to zoom with the mouse wheel. This lets users scroll the page without accidentally zooming the viewer. When Ctrl is not held, an overlay prompt is shown.
+</ParamField>
+
+<ParamField path="touchmoveTwoFingers" type="boolean" default="false">
+  Requires two fingers to rotate the panorama on touch screens, allowing standard single-finger page scrolling. When only one finger is detected, an overlay prompt is shown.
+</ParamField>
+
+---
+
+## Advanced options
+
+<ParamField path="sphereCorrection" type="{ pan: double | string, tilt: double | string, roll: double | string }" default="{ pan: 0, tilt: 0, roll: 0 }">
+  Corrects the panorama orientation. If the panorama file contains XMP pose data (heading/pitch/roll), those values are applied before `sphereCorrection`.
+</ParamField>
+
+<ParamField path="panoData" type="PanoData | function(image, xmpData) => PanoData">
+  Overrides XMP data found in the panorama file. All sub-fields are optional.
+
+  <Tabs>
+    <Tab title="Static object">
+      ```javascript
+      panoData: {
+        fullWidth: 6000,
+        fullHeight: 3000,    // optional
+        croppedWidth: 4000,  // optional
+        croppedHeight: 2000, // optional
+        croppedX: 1000,
+        croppedY: 500,
+      }
+      ```
+    </Tab>
+    <Tab title="Dynamic function">
+      ```javascript
+      panoData: (image, xmpData) => ({
+        fullWidth: image.width,
+        fullHeight: Math.round(image.width / 2),
+        croppedWidth: image.width,
+        croppedHeight: image.height,
+        croppedX: 0,
+        croppedY: Math.round((image.width / 2 - image.height) / 2),
+      });
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="defaultTransition" type="TransitionOptions" default="{ speed: 1500, rotation: true, effect: 'fade' }">
+  Default transition used when switching between panoramas. All fields can be overridden per call to `setPanorama()`.
+
+  - `effect`: `'fade'`, `'black'`, or `'white'`
+  - `speed`: duration in milliseconds, or a string with revolutions per minute (e.g. `'2rpm'`)
+  - `rotation`: whether to animate camera rotation during the transition
+</ParamField>
+
+<ParamField path="moveSpeed" type="double" default="1">
+  Speed multiplier for panorama movement (click-drag, touch swipe, and navbar move buttons).
+</ParamField>
+
+<ParamField path="zoomSpeed" type="double" default="1">
+  Speed multiplier for panorama zoom (mouse wheel, touch pinch, and navbar zoom buttons).
+</ParamField>
+
+<ParamField path="moveInertia" type="boolean | number" default="0.8">
+  Applies damping to camera movement. Higher values mean stronger damping. Pass `false` to disable, or `true` to use the default damping factor.
+</ParamField>
+
+<ParamField path="requestHeaders" type="object | function(url) => object">
+  HTTP headers sent when loading image files.
+
+  <Tabs>
+    <Tab title="Static headers">
+      ```javascript
+      requestHeaders: {
+        header: 'value',
+      }
+      ```
+    </Tab>
+    <Tab title="Dynamic function">
+      ```javascript
+      // Useful for short-lived tokens such as Bearer tokens
+      requestHeaders: (url) => ({
+        header: 'value',
+      });
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="withCredentials" type="boolean | function(url) => boolean" default="false">
+  Send credentials with HTTP requests.
+
+  ```javascript
+  // Dynamic example — skip credentials for certain hosts
+  withCredentials: (url) => !url.includes('amazonaws');
+  ```
+</ParamField>
+
+<ParamField path="keyboardActions" type="object">
+  Maps key codes to viewer actions. The key can include modifiers (`Ctrl`, `Shift`, `Alt`, `Meta`) separated by `+`.
+
+  ```javascript
+  // Defaults
+  keyboardActions: {
+    'ArrowUp': 'ROTATE_UP',
+    'ArrowDown': 'ROTATE_DOWN',
+    'ArrowRight': 'ROTATE_RIGHT',
+    'ArrowLeft': 'ROTATE_LEFT',
+    'PageUp': 'ZOOM_IN',
+    'PageDown': 'ZOOM_OUT',
+    '+': 'ZOOM_IN',
+    '-': 'ZOOM_OUT',
+  }
+  ```
+
+  You can also assign an arbitrary callback. It receives the viewer instance and the original keyboard event.
+
+  ```javascript
+  import { DEFAULTS } from '@photo-sphere-viewer/core';
+
+  keyboardActions: {
+    ...DEFAULTS.keyboardActions,
+    'h': (viewer, evt) => {
+      // do something when H is pressed
+    },
+    'Ctrl+1': (viewer) => {
+      // do something when Ctrl + 1 is pressed
+    },
+  }
+  ```
+
+  <Tip>
+    Use [Key.js](https://keyjs.dev/) to identify the exact key combination string for any keystroke. Use `Plus` instead of `+` when combining the plus key with a modifier, for example `Shift+Plus`.
+  </Tip>
+
+  <Warning>
+    Keyboard actions are only active in fullscreen by default. Change this with the [`keyboard`](#keyboard) option.
+  </Warning>
+</ParamField>
+
+<ParamField path="canvasBackground" type="string" default="#000">
+  Background of the WebGL canvas, visible when using cropped panoramas. Accepts any valid CSS `background` value.
+</ParamField>
+
+<ParamField path="rendererParameters" type="WebGLRendererParameters" default="{ alpha: true, antialias: true }">
+  Configuration passed directly to the Three.js `WebGLRenderer`. See the [Three.js docs](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) for available options.
+</ParamField>
+
+---
+
+## Cache
+
+Photo Sphere Viewer includes a global cache shared across all viewer instances. It saves resources when switching back and forth between multiple panoramas.
+
+<Note>
+  This cache is unrelated to the Three.js internal cache, which should remain disabled.
+</Note>
+
+```javascript
+import { Cache } from '@photo-sphere-viewer/core';
+
+Cache.enabled = false;
+Cache.ttl = 300;
+Cache.maxItems = 3;
+```
+
+<ParamField path="Cache.enabled" type="boolean" default="true">
+  Set to `false` to completely disable the cache.
+</ParamField>
+
+<ParamField path="Cache.ttl" type="number" default="600">
+  Maximum retention duration in minutes.
+</ParamField>
+
+<ParamField path="Cache.maxItems" type="number" default="10">
+  Maximum number of items stored. Note that cubemap and tile adapters store multiple files per panorama, so the actual file count may be higher.
+</ParamField>

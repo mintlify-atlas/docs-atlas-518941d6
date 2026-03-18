@@ -1,0 +1,74 @@
+---
+title: "Visible range plugin"
+description: "Restrict the viewable area of the panorama by locking horizontal and vertical rotation ranges."
+---
+
+The Visible Range plugin constrains the camera to a defined horizontal and/or vertical range. It affects both manual navigation and automatic rotation.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/visible-range-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/visible-range-plugin
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { VisibleRangePlugin } from '@photo-sphere-viewer/visible-range-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        VisibleRangePlugin.withConfig({
+            horizontalRange: [-Math.PI / 2, Math.PI / 2],
+            verticalRange: [-Math.PI / 3, Math.PI / 3],
+        }),
+    ],
+});
+
+const visibleRangePlugin = viewer.getPlugin(VisibleRangePlugin);
+
+// Update ranges at runtime
+visibleRangePlugin.setHorizontalRange(['0deg', '180deg']);
+visibleRangePlugin.setVerticalRange(null); // remove restriction
+```
+
+Alternatively, set `usePanoData` to `true` to derive the visible range from [cropped panorama data](/adapters/equirectangular#cropped-panorama).
+
+## Configuration
+
+<ParamField path="horizontalRange" type="number[] | string[]" default="null">
+  Visible horizontal range as a two-element array of angles (radians or degree strings). Not updatable after init — use `setHorizontalRange()` instead.
+</ParamField>
+
+<ParamField path="verticalRange" type="number[] | string[]" default="null">
+  Visible vertical range as a two-element array of angles (radians or degree strings). Not updatable after init — use `setVerticalRange()` instead.
+</ParamField>
+
+<ParamField path="usePanoData" type="boolean" default="false">
+  Immediately apply the cropped panorama data as the visible range after each panorama load. Updatable.
+</ParamField>
+
+## Methods
+
+#### `setHorizontalRange(range)` / `setVerticalRange(range)`
+
+Update or remove a range at runtime. Pass `null` to remove the restriction.
+
+```javascript
+visibleRangePlugin.setHorizontalRange([-Math.PI / 4, Math.PI / 4]);
+visibleRangePlugin.setVerticalRange(null);
+```
+
+#### `setRangesFromPanoData()`
+
+Derive and apply both ranges from the current panorama's crop data. Equivalent to calling `usePanoData: true` after a panorama load.

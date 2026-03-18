@@ -1,0 +1,209 @@
+---
+title: "Events"
+description: "All events dispatched by Photo Sphere Viewer, with listener patterns and event data properties."
+---
+
+## Overview
+
+All Photo Sphere Viewer objects — the `Viewer` and plugins — implement the standard [EventTarget API](https://developer.mozilla.org/docs/Web/API/EventTarget). Events are strongly typed in TypeScript via a custom `TypedEventTarget` interface.
+
+Each event listener receives a single `Event` subclass with additional properties:
+
+- `type` — the event name string
+- `target` — reference to the viewer (or plugin) that dispatched the event
+
+## Listening to events
+
+You can use the named event constant (preferred, for TypeScript type inference) or the plain string:
+
+```javascript
+import { events } from '@photo-sphere-viewer/core';
+
+// Using a constant — gives you full type information on `e`
+viewer.addEventListener(events.PositionUpdatedEvent.type, (e) => {
+  // e.type === 'position-updated'
+  // e.target === viewer
+  // e.position === { yaw: number, pitch: number }
+  console.log(e.position);
+});
+
+// Using a plain string — simpler but no extra type inference
+viewer.addEventListener('position-updated', ({ position }) => {
+  console.log(position);
+});
+```
+
+The full list of events is available in the [API reference](https://photo-sphere-viewer.js.org/api/modules/Core.events.html).
+
+---
+
+## Main events
+
+### `ready`
+
+Triggered once when the panorama image has been loaded and the viewer is ready to perform the first render. Use `{ once: true }` so the listener is automatically removed after firing.
+
+```javascript
+viewer.addEventListener('ready', () => {
+  console.log('viewer is ready');
+}, { once: true });
+```
+
+### `click` / `dblclick`
+
+Triggered when the user clicks on the viewer (excluding the navbar and side panel). The event data contains many details about the click location.
+
+```javascript
+viewer.addEventListener('click', ({ data }) => {
+  console.log(
+    `${data.rightclick ? 'right ' : ''}clicked at yaw: ${data.yaw} pitch: ${data.pitch}`
+  );
+});
+```
+
+**Event data (`ClickData`):**
+
+| Property | Type | Description |
+|---|---|---|
+| `yaw` | `number` | Horizontal angle of the clicked point |
+| `pitch` | `number` | Vertical angle of the clicked point |
+| `textureX` | `number` | Pixel X on the source panorama image |
+| `textureY` | `number` | Pixel Y on the source panorama image |
+| `rightclick` | `boolean` | Whether the right mouse button was used |
+| `target` | `HTMLElement` | The actual DOM element that was clicked |
+
+<Note>
+  A `click` event is always fired before a `dblclick` event.
+</Note>
+
+### `position-updated`
+
+Triggered when the view yaw and/or pitch changes.
+
+```javascript
+viewer.addEventListener('position-updated', ({ position }) => {
+  console.log(`new position is yaw: ${position.yaw} pitch: ${position.pitch}`);
+});
+```
+
+### `zoom-updated`
+
+Triggered when the zoom level changes.
+
+```javascript
+viewer.addEventListener('zoom-updated', ({ zoomLevel }) => {
+  console.log(`new zoom level is ${zoomLevel}`);
+});
+```
+
+---
+
+## All viewer events
+
+### Interaction events
+
+| Event | Type string | Description |
+|---|---|---|
+| `ClickEvent` | `click` | User clicked on the viewer |
+| `DoubleClickEvent` | `dblclick` | User double-clicked on the viewer |
+| `KeypressEvent` | `key-press` | A key was pressed (can be cancelled) |
+| `FullscreenEvent` | `fullscreen` | Fullscreen was enabled or disabled |
+
+### Position & zoom events
+
+| Event | Type string | Description |
+|---|---|---|
+| `PositionUpdatedEvent` | `position-updated` | Camera yaw or pitch changed |
+| `RollUpdatedEvent` | `roll-updated` | Camera roll changed |
+| `ZoomUpdatedEvent` | `zoom-updated` | Zoom level changed |
+| `SizeUpdatedEvent` | `size-updated` | Viewer container was resized |
+
+### Panorama lifecycle events
+
+| Event | Type string | Description |
+|---|---|---|
+| `ReadyEvent` | `ready` | Viewer ready for first render |
+| `PanoramaLoadEvent` | `panorama-load` | A new panorama started loading |
+| `PanoramaLoadedEvent` | `panorama-loaded` | Panorama has finished loading |
+| `PanoramaErrorEvent` | `panorama-error` | Error while loading a panorama |
+| `TransitionDoneEvent` | `transition-done` | Transition completed (or was cancelled) |
+| `LoadProgressEvent` | `load-progress` | Loader progress value changed |
+
+### Animation events
+
+| Event | Type string | Description | Cancellable |
+|---|---|---|---|
+| `BeforeAnimateEvent` | `before-animate` | Fired before an animation starts | Yes |
+| `BeforeRotateEvent` | `before-rotate` | Fired before a rotate operation | Yes |
+| `BeforeRenderEvent` | `before-render` | Fired before each render frame | No |
+| `RenderEvent` | `render` | Fired on each render | No |
+| `StopAllEvent` | `stop-all` | All animations were stopped | No |
+
+### Configuration events
+
+| Event | Type string | Description |
+|---|---|---|
+| `ConfigChangedEvent` | `config-changed` | One or more options were updated |
+
+### UI events
+
+| Event | Type string | Description |
+|---|---|---|
+| `ShowNotificationEvent` | `show-notification` | Notification was shown |
+| `HideNotificationEvent` | `hide-notification` | Notification was hidden |
+| `ShowOverlayEvent` | `show-overlay` | Overlay was shown |
+| `HideOverlayEvent` | `hide-overlay` | Overlay was hidden |
+| `ShowPanelEvent` | `show-panel` | Side panel was shown |
+| `HidePanelEvent` | `hide-panel` | Side panel was hidden |
+| `ShowTooltipEvent` | `show-tooltip` | A tooltip was shown |
+| `HideTooltipEvent` | `hide-tooltip` | A tooltip was hidden |
+
+### Three.js object events
+
+These events require calling `viewer.observeObjects(userDataKey)` first.
+
+| Event | Type string | Description |
+|---|---|---|
+| `ObjectEnterEvent` | `enter-object` | Cursor entered a scene object |
+| `ObjectLeaveEvent` | `leave-object` | Cursor left a scene object |
+| `ObjectHoverEvent` | `hover-object` | Cursor moved over a scene object |
+
+---
+
+## Cancellable events
+
+Some events can be cancelled by calling `event.preventDefault()`. This prevents the associated action from occurring:
+
+```javascript
+import { events } from '@photo-sphere-viewer/core';
+
+// Prevent rotation beyond a certain yaw
+viewer.addEventListener(events.BeforeRotateEvent.type, (e) => {
+  if (e.position.yaw > Math.PI) {
+    e.preventDefault();
+  }
+});
+
+// Modify the target position before the animation begins
+viewer.addEventListener(events.BeforeAnimateEvent.type, (e) => {
+  if (e.position) {
+    e.position.pitch = 0; // force pitch to horizon
+  }
+});
+```
+
+---
+
+## `config-changed` helper
+
+`ConfigChangedEvent` exposes a `containsOptions()` helper for efficiently checking which options were updated:
+
+```javascript
+import { events } from '@photo-sphere-viewer/core';
+
+viewer.addEventListener(events.ConfigChangedEvent.type, (e) => {
+  if (e.containsOptions('fisheye', 'moveSpeed')) {
+    // fisheye or moveSpeed was changed
+  }
+});
+```

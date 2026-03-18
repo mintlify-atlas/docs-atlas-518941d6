@@ -1,0 +1,170 @@
+---
+title: "Development"
+description: "How to contribute to Photo Sphere Viewer: setting up the monorepo, running the dev server, building packages, and executing tests."
+---
+
+Photo Sphere Viewer is developed in [TypeScript](https://www.typescriptlang.org/) and [SASS](https://sass-lang.com/). The repository is a [Turborepo](https://turbo.build/repo) monorepo containing the core package, official adapters, and plugins. Builds are powered by [tsup](https://tsup.egoist.dev/) (an esbuild-based toolkit). Documentation is generated with [VitePress](https://vitepress.dev/) and [TypeDoc](https://typedoc.org/). Linting uses [ESLint](https://eslint.org/) and [Stylelint](https://stylelint.io/). Tests run with [Mocha](https://mochajs.org/) (unit) and [Cypress](https://www.cypress.io/) (end-to-end).
+
+## Prerequisites
+
+<Warning>
+  Node.js 24 or later is required. Older versions are not supported.
+</Warning>
+
+The repository uses [Yarn 1 (Classic)](https://classic.yarnpkg.com/) as its package manager. Install dependencies from the repo root:
+
+```bash
+yarn install
+```
+
+## Repo structure
+
+```
+repo/
+├── packages/       # Core, adapters, and plugins (one package per directory)
+├── docs/           # VitePress documentation site
+├── cypress/        # Cypress end-to-end tests
+├── build/          # Build scripts and utilities
+└── package.json    # Root scripts (Turbo)
+```
+
+All `packages/*` entries are Yarn workspaces. Turbo is used to run tasks across all workspaces in the correct dependency order.
+
+## Development commands
+
+<CardGroup cols={2}>
+  <Card title="Dev server" icon="play">
+    Launch a live-reloading dev server for all packages.
+  </Card>
+  <Card title="Documentation" icon="book">
+    Serve the VitePress documentation site locally.
+  </Card>
+  <Card title="Linting" icon="check">
+    Run ESLint and Stylelint across the entire repo.
+  </Card>
+  <Card title="Tests" icon="flask">
+    Run unit tests (Mocha) and end-to-end tests (Cypress).
+  </Card>
+</CardGroup>
+
+### Dev server
+
+```bash
+# Start the dev server (watches all packages)
+npm run serve
+
+# Watch only selected packages (interactive prompt)
+npm run serve-filter
+```
+
+### Documentation
+
+```bash
+# Serve docs locally
+npm run doc:serve
+
+# Build the documentation
+npm run doc:build
+```
+
+### Building
+
+```bash
+# Build all packages
+npm run build
+```
+
+### Linting
+
+```bash
+# Run all linters
+npm run lint
+```
+
+### Testing
+
+<Tabs>
+  <Tab title="Unit tests">
+    ```bash
+    npm run test
+    ```
+
+    Unit tests are written with [Mocha](https://mochajs.org/) and live alongside each package.
+  </Tab>
+
+  <Tab title="End-to-end tests">
+    ```bash
+    # Open the Cypress interactive runner
+    npm run e2e:open
+
+    # Run Cypress tests headlessly
+    npm run e2e:run
+    ```
+
+    End-to-end tests use [Cypress](https://www.cypress.io/) and are located in the `cypress/` directory.
+  </Tab>
+</Tabs>
+
+### npm link
+
+To test local changes in a consuming project, register all packages with `npm link`:
+
+```bash
+npm run npm-link
+```
+
+This runs `npm link` for every package in `packages/*`, making them available globally so you can link them into your project with `npm link @photo-sphere-viewer/<package>`.
+
+## Making changes
+
+<Steps>
+  <Step title="Fork and clone the repository">
+    Fork the repo on GitHub, then clone your fork:
+
+    ```bash
+    git clone https://github.com/<your-username>/Photo-Sphere-Viewer.git
+    cd Photo-Sphere-Viewer
+    yarn install
+    ```
+  </Step>
+
+  <Step title="Start the dev server">
+    Run the dev server to watch for changes across all packages:
+
+    ```bash
+    npm run serve
+    ```
+
+    Use `npm run serve-filter` to watch only the packages you are actively editing.
+  </Step>
+
+  <Step title="Make your changes">
+    Edit source files inside `packages/<package-name>/src/`. TypeScript and SASS files are compiled automatically while the dev server is running.
+  </Step>
+
+  <Step title="Run linting and tests">
+    Before opening a pull request, make sure linting and tests pass:
+
+    ```bash
+    npm run lint
+    npm run test
+    ```
+  </Step>
+
+  <Step title="Open a pull request">
+    Push your branch and open a pull request against `main` on the upstream repository.
+  </Step>
+</Steps>
+
+## Credits
+
+The following photos and videos are used across the demos:
+
+| Demo | Author |
+|---|---|
+| `sphere`, `sphere-tiles`, `cubemap`, `cubemap-tiles` | [Damien Sorel](https://galerie.strangeplanet.fr/picture.php?/1802/category/81) |
+| `sphere-tiles-24k`, `cubemap-tiles-24k` | [Greg Zaal](https://polyhaven.com/a/cannon) |
+| `artist-workshop` | [Oliksiy Yakovlyev](https://polyhaven.com/a/artist_workshop) |
+| `equirectangular-video` | [Mettle Communications](https://www.mettle.com/360vr-master-series-free-360-downloads-page) |
+| `cubemap-video` | [The Dalí Museum](https://www.youtube.com/watch?v=zQ2-oJOkTKc) |
+| `dualfisheye` | [Jonna Luostari](https://jonnaluostari.com) |

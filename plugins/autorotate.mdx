@@ -1,0 +1,164 @@
+---
+title: "Autorotate plugin"
+description: "Automatically rotate the panorama on idle, or guide visitors through a list of keypoints with pauses and tooltips."
+---
+
+The Autorotate plugin adds automatic rotation to the panorama. In standard mode the panorama slowly spins; in keypoints mode it visits a defined list of positions, pausing and displaying tooltips along the way.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/autorotate-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/autorotate-plugin
+```
+
+</CodeGroup>
+
+## Usage
+
+<Tabs>
+  <Tab title="Standard">
+    In standard mode the panorama rotates continuously. Configure `autorotatePitch` to lock the vertical angle.
+
+    ```javascript
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import { AutorotatePlugin } from '@photo-sphere-viewer/autorotate-plugin';
+
+    const viewer = new Viewer({
+        panorama: 'path/to/panorama.jpg',
+        plugins: [
+            AutorotatePlugin.withConfig({
+                autorotatePitch: '5deg',
+            }),
+        ],
+    });
+    ```
+  </Tab>
+  <Tab title="Keypoints">
+    In keypoints mode the plugin visits a list of positions. Each keypoint can be a position object, a marker ID, or a full configuration object with a pause and tooltip.
+
+    ```javascript
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import { AutorotatePlugin } from '@photo-sphere-viewer/autorotate-plugin';
+
+    const viewer = new Viewer({
+        panorama: 'path/to/panorama.jpg',
+        plugins: [
+            AutorotatePlugin.withConfig({
+                keypoints: [
+                    'existing-marker-id',
+
+                    { yaw: Math.PI / 2, pitch: 0 },
+
+                    {
+                        position: { yaw: Math.PI, pitch: Math.PI / 6 },
+                        pause: 5000,
+                        tooltip: 'This is interesting',
+                    },
+
+                    {
+                        markerId: 'another-marker', // uses the marker tooltip if any
+                        pause: 2500,
+                    },
+                ],
+            }),
+        ],
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+<ParamField path="autostartDelay" type="integer" default="2000">
+  Delay in milliseconds after which the automatic rotation begins. Updatable.
+</ParamField>
+
+<ParamField path="autostartOnIdle" type="boolean" default="true">
+  Restart the automatic rotation when the user has been idle for `autostartDelay` milliseconds. Updatable.
+
+  <Note>
+    The rotation will not restart if the user explicitly clicked the navbar autorotate button to stop it.
+  </Note>
+</ParamField>
+
+<ParamField path="autorotateSpeed" type="string" default="'2rpm'">
+  Speed of the automatic rotation. Accepts any speed string (e.g. `'2rpm'`, `'10deg/s'`). Use a negative value to reverse the direction. Updatable.
+</ParamField>
+
+<ParamField path="autorotatePitch" type="number | string" default="viewer defaultPitch">
+  Vertical angle at which the automatic rotation is performed. When `null` the current pitch is kept. Updatable.
+</ParamField>
+
+<ParamField path="autorotateZoomLvl" type="number" default="null">
+  Zoom level at which the automatic rotation is performed. When `null` the current zoom level is kept. Updatable.
+</ParamField>
+
+<ParamField path="keypoints" type="AutorotateKeypoint[]">
+  Initial keypoints. Not updatable after init — use `setKeypoints()` instead.
+
+  Each keypoint is one of:
+  - A position object with `yaw`/`pitch` or `textureX`/`textureY`
+  - A marker ID string (requires the [Markers plugin](/plugins/markers))
+  - A configuration object:
+
+  ```typescript
+  {
+      position?: ExtendedPosition;
+      markerId?: string;  // use position and tooltip of a marker
+      pause?: number;     // pause in ms; shows tooltip if available
+      tooltip?: string | { content: string; position?: string };
+  }
+  ```
+</ParamField>
+
+<ParamField path="startFromClosest" type="boolean" default="true">
+  Start from the closest keypoint instead of the first keypoint in the array. Updatable.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      autorotate: 'Automatic rotation',
+  }
+  ```
+</ParamField>
+
+## Methods
+
+#### `setKeypoints(keypoints)`
+
+Replaces the current keypoints. Pass `null` or an empty array to remove all keypoints.
+
+#### `start()` / `stop()` / `toggle()`
+
+Start, stop, or toggle the automatic rotation.
+
+## Events
+
+#### `autorotate`
+
+Triggered when the automatic rotation is enabled or disabled.
+
+```javascript
+autorotatePlugin.addEventListener('autorotate', ({ autorotateEnabled }) => {
+    console.log('Autorotate:', autorotateEnabled);
+});
+```
+
+## Navbar buttons
+
+This plugin adds one button to the default navbar:
+
+- **`autorotate`** — toggles the automatic rotation on and off
+
+<Note>
+  If you use a custom navbar, add `'autorotate'` to your navbar configuration manually.
+</Note>

@@ -1,0 +1,155 @@
+---
+title: "Equirectangular adapter"
+description: "Load standard equirectangular panoramas, including cropped and partial images with XMP metadata support. The default adapter included in the core package."
+---
+
+[Equirectangular projection](https://en.wikipedia.org/wiki/Equirectangular_projection) is one of the simplest ways to create a sphere texture. It is the default projection used by most 360° cameras and is the built-in adapter in `@photo-sphere-viewer/core`.
+
+<Tip>
+  There is no need to declare the equirectangular adapter explicitly — it is the default. Only declare it when you want to change its configuration.
+</Tip>
+
+## Installation
+
+The equirectangular adapter is included in the core package. No additional installation is required.
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/core
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/core
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { EquirectangularAdapter } from '@photo-sphere-viewer/core';
+
+const viewer = new Viewer({
+    adapter: EquirectangularAdapter,
+    panorama: 'path/panorama.jpg',
+});
+```
+
+## Configuration
+
+<ParamField path="useXmpData" type="boolean" default="true">
+  Read the real image size from XMP metadata embedded in the file. Keep this set to `true` if the panorama was cropped after being shot. This is used for [cropped panoramas](#cropped-panoramas).
+</ParamField>
+
+<ParamField path="resolution" type="number" default="64">
+  The number of faces of the sphere geometry used to display the panorama. Higher values reduce deformations on straight lines at the cost of performance.
+
+  The actual number of faces is `resolution² / 2`.
+</ParamField>
+
+## Cropped panoramas
+
+Photo Sphere Viewer supports cropped panoramas that do not cover the full 360°×180° sphere area. For example, an image covering 360° horizontally but only 90° vertically, or a semi-sphere (180°×180°).
+
+Cropped panoramas are handled in two ways:
+
+- **XMP metadata** — read automatically from the file when `useXmpData` is `true` (default)
+- **`panoData` option** — provide the cropping values manually in the viewer config
+
+### Cropping data fields
+
+Both approaches rely on six pixel values:
+
+| Field | Description |
+|---|---|
+| `fullWidth` | Full panorama width |
+| `fullHeight` | Full panorama height (must give a 2:1 ratio with `fullWidth`) |
+| `croppedWidth` | Actual width of your image |
+| `croppedHeight` | Actual height of your image |
+| `croppedX` | Horizontal offset of the cropped area |
+| `croppedY` | Vertical offset of the cropped area |
+
+Additional angular fields (`poseHeading`, `posePitch`, `poseRoll`, `initialViewHeading`, `initialViewPitch`, `initialHorizontalFOV`) set the camera orientation and starting view.
+
+See [Google's spherical metadata documentation](https://developers.google.com/streetview/spherical-metadata) for the full specification.
+
+### Provide cropping data via XMP
+
+If you shot the panorama with a mobile phone or a dedicated 360° camera, it likely already contains the correct XMP data. You can also inject XMP data manually using [exiftool](https://exiftool.org).
+
+The XMP payload format:
+
+```xml
+<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="" xmlns:GPano="http://ns.google.com/photos/1.0/panorama/">
+      <GPano:ProjectionType>equirectangular</GPano:ProjectionType>
+      <!-- cropping information -->
+      <GPano:FullPanoWidthPixels>6000</GPano:FullPanoWidthPixels>
+      <GPano:FullPanoHeightPixels>3000</GPano:FullPanoHeightPixels>
+      <GPano:CroppedAreaImageWidthPixels>4000</GPano:CroppedAreaImageWidthPixels>
+      <GPano:CroppedAreaImageHeightPixels>2000</GPano:CroppedAreaImageHeightPixels>
+      <GPano:CroppedAreaLeftPixels>1000</GPano:CroppedAreaLeftPixels>
+      <GPano:CroppedAreaTopPixels>500</GPano:CroppedAreaTopPixels>
+      <!-- pose information -->
+      <GPano:PoseHeadingDegrees>0</GPano:PoseHeadingDegrees>
+      <GPano:PosePitchDegrees>0</GPano:PosePitchDegrees>
+      <GPano:PoseRollDegrees>0</GPano:PoseRollDegrees>
+      <!-- initial view information -->
+      <GPano:InitialViewHeadingDegrees>0</GPano:InitialViewHeadingDegrees>
+      <GPano:InitialViewPitchDegrees>0</GPano:InitialViewPitchDegrees>
+      <GPano:InitialHorizontalFOVDegrees>60</GPano:InitialHorizontalFOVDegrees>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="r"?>
+```
+
+To write the XMP data into an image file, save it to a text file and run:
+
+```bash
+exiftool -tagsfromfile data.xmp -all:all panorama.jpg
+```
+
+### Provide cropping data manually
+
+Pass the values directly via the `panoData` option:
+
+```javascript
+const viewer = new Viewer({
+    container: 'viewer',
+    panorama: 'path/to/panorama.jpg',
+
+    // cropping information
+    panoData: {
+        fullWidth: 6000,
+        fullHeight: 3000,    // optional
+        croppedWidth: 4000,  // optional
+        croppedHeight: 2000, // optional
+        croppedX: 1000,
+        croppedY: 500,
+    },
+});
+```
+
+### Default behavior when no data is provided
+
+If the image does not have a 2:1 ratio, no XMP data is found, and no `panoData` is provided, Photo Sphere Viewer applies a best-effort algorithm to display the image without distortion:
+
+```javascript
+const fullWidth = Math.max(img.width, img.height * 2);
+const fullHeight = Math.round(fullWidth / 2);
+const croppedX = Math.round((fullWidth - img.width) / 2);
+const croppedY = Math.round((fullHeight - img.height) / 2);
+
+panoData = {
+    fullWidth: fullWidth,
+    fullHeight: fullHeight,
+    croppedWidth: img.width,
+    croppedHeight: img.height,
+    croppedX: croppedX,
+    croppedY: croppedY,
+};
+```

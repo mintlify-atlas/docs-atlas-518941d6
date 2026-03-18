@@ -1,0 +1,142 @@
+---
+title: "Gallery plugin"
+description: "Add a thumbnail gallery at the bottom of the viewer to navigate between multiple panoramas."
+---
+
+The Gallery plugin displays a horizontal strip of thumbnails at the bottom of the viewer. Users can switch between panoramas by clicking a thumbnail. It integrates naturally with the Virtual Tour plugin.
+
+<Warning>
+  GalleryPlugin is not compatible with ResolutionPlugin.
+</Warning>
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/gallery-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/gallery-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/gallery-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { GalleryPlugin } from '@photo-sphere-viewer/gallery-plugin';
+
+const viewer = new Viewer({
+    plugins: [
+        GalleryPlugin.withConfig({
+            items: [
+                {
+                    id: 'pano-1',
+                    name: 'Panorama 1',
+                    panorama: 'path/to/pano-1.jpg',
+                    thumbnail: 'path/to/pano-1-thumb.jpg',
+                },
+                {
+                    id: 'pano-2',
+                    name: 'Panorama 2',
+                    panorama: 'path/to/pano-2.jpg',
+                    thumbnail: 'path/to/pano-2-thumb.jpg',
+                },
+            ],
+        }),
+    ],
+});
+```
+
+## Configuration
+
+<ParamField path="items" type="GalleryItem[]">
+  The list of panorama items. Not updatable after init — use `setItems()` instead.
+</ParamField>
+
+<ParamField path="visibleOnLoad" type="boolean" default="false">
+  Show the gallery when the first panorama loads. The user can toggle it with the navbar button.
+</ParamField>
+
+<ParamField path="hideOnClick" type="boolean" default="true">
+  Close the gallery when the user selects an item. Always `true` on screens narrower than 500px. Updatable.
+</ParamField>
+
+<ParamField path="navigationArrows" type="boolean" default="false">
+  Show left/right navigation arrows on the sides of the gallery.
+</ParamField>
+
+<ParamField path="thumbnailSize" type="{ width: number, height: number }" default="{ width: 200, height: 100 }">
+  Size of each thumbnail in pixels. Updatable.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      gallery: 'Gallery',
+  }
+  ```
+</ParamField>
+
+## Item options
+
+<ParamField path="id" type="number | string" required>
+  Unique identifier for the item.
+</ParamField>
+
+<ParamField path="panorama" required>
+  The panorama to display. Accepts the same value as the main viewer `panorama` option.
+</ParamField>
+
+<ParamField path="thumbnail" type="string" default="''">
+  URL of the thumbnail image shown in the gallery strip.
+</ParamField>
+
+<ParamField path="name" type="string" default="''">
+  Text label shown over the thumbnail.
+</ParamField>
+
+<ParamField path="options" type="PanoramaOptions" default="null">
+  Any options supported by the `setPanorama()` method, applied when this item is selected.
+</ParamField>
+
+## Methods
+
+#### `setItems(items)`
+
+Replaces the current gallery items.
+
+## Navbar button
+
+This plugin adds a **`gallery`** button to the default navbar to toggle the gallery panel.
+
+<Note>
+  If you use a custom navbar, add `'gallery'` to your navbar configuration manually.
+</Note>
+
+## SCSS variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `$breakpoint` | `500px` | Screen width below which the gallery is displayed full-height |
+| `$padding` | `15px` | Container padding |
+| `$border` | `1px solid core.$buttons-color` | Border between gallery and navbar |
+| `$background` | `core.$navbar-background` | Gallery background |
+| `$item-radius` | `5px` | Corner radius of gallery items |
+| `$item-active-border` | `3px solid white` | Border of the active gallery item |
+| `$title-font` | `core.$caption-font` | Font of the item title |
+| `$title-color` | `core.$caption-text-color` | Color of the item title |
+| `$title-background` | `rgba(0, 0, 0, .6)` | Background behind the item title |
+| `$thumb-hover-scale` | `1.2` | Scale factor of thumbnails on hover |
+| `$arrow-color` | `rgba(255, 255, 255, 0.6)` | Color of navigation arrows |
+| `$arrow-background` | `rgba(0, 0, 0, 0.6)` | Gradient behind navigation arrows |
+| `$scrollbar-color` | `$arrow-color` | Scrollbar color (browser support required) |

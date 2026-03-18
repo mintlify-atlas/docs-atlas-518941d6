@@ -1,0 +1,170 @@
+---
+title: Migration from v4
+description: How to migrate from Photo Sphere Viewer v4 (photo-sphere-viewer) to v5 (@photo-sphere-viewer/*).
+---
+
+This page covers the breaking changes in Photo Sphere Viewer v5 and how to update your code.
+
+## Packages, ESM, and ES6
+
+<Warning>
+  The single `photo-sphere-viewer` npm package has been split into multiple scoped packages. You must update your dependencies.
+</Warning>
+
+Install `@photo-sphere-viewer/core` for the core viewer. Each adapter and plugin is its own package — install only what you use.
+
+```bash
+npm install @photo-sphere-viewer/core
+```
+
+Here is the full list of available packages:
+
+- `@photo-sphere-viewer/core`
+- `@photo-sphere-viewer/cubemap-adapter`
+- `@photo-sphere-viewer/cubemap-tiles-adapter`
+- `@photo-sphere-viewer/cubemap-video-adapter`
+- `@photo-sphere-viewer/equirectangular-tiles-adapter`
+- `@photo-sphere-viewer/equirectangular-video-adapter`
+- `@photo-sphere-viewer/autorotate-plugin`
+- `@photo-sphere-viewer/compass-plugin`
+- `@photo-sphere-viewer/gallery-plugin`
+- `@photo-sphere-viewer/gyroscope-plugin`
+- `@photo-sphere-viewer/markers-plugin`
+- `@photo-sphere-viewer/resolution-plugin`
+- `@photo-sphere-viewer/settings-plugin`
+- `@photo-sphere-viewer/stereo-plugin`
+- `@photo-sphere-viewer/video-plugin`
+- `@photo-sphere-viewer/virtual-tour-plugin`
+- `@photo-sphere-viewer/visible-range-plugin`
+
+Each package ships the following files:
+
+| File | Format |
+|------|--------|
+| `index.cjs` | CJS bundle |
+| `index.module.js` | ESM bundle |
+| `index.d.ts` | TypeScript declarations |
+| `index.css` *(optional)* | Stylesheet |
+| `index.scss` *(optional)* | SASS source |
+
+<Warning>
+  All `@photo-sphere-viewer` packages use modern ES6 syntax. If you need to support older browsers, configure a transpiler such as Babel.
+</Warning>
+
+## Options
+
+### Position coordinate renames
+
+Photo Sphere Viewer uses two coordinate systems: spherical (longitude + latitude) and pixel coordinates on the source image (x + y). These have been renamed to avoid confusion with GPS terminology.
+
+| v4 | v5 |
+|----|----|
+| `longitude` | `yaw` |
+| `latitude` | `pitch` |
+| `x` | `textureX` |
+| `y` | `textureY` |
+
+### Renamed options
+
+| v4 | v5 |
+|----|----|
+| `defaultLong` | `defaultYaw` |
+| `defaultLat` | `defaultPitch` |
+
+### Renamed marker options
+
+| v4 | v5 |
+|----|----|
+| `polygonRad` | `polygon` |
+| `polygonPx` | `polygonPixels` |
+| `polylineRad` | `polyline` |
+| `polylinePx` | `polylinePixels` |
+
+## Automatic rotation
+
+<Warning>
+  The `autorotateXxx` options have been removed from the core viewer.
+</Warning>
+
+All automatic rotation features are now provided by the `@photo-sphere-viewer/autorotate-plugin` package. Install and configure the plugin to replace previous `autorotateXxx` options.
+
+## Events
+
+<Warning>
+  The `on()`, `off()`, and `once()` methods have been removed. Photo Sphere Viewer v5 uses the native DOM events API.
+</Warning>
+
+Update all event listeners to use `addEventListener` and `removeEventListener`.
+
+<CodeGroup>
+
+```javascript on/off — before (v4)
+viewer.on('position-updated', (e, position) => {
+    console.log(position.longitude);
+});
+
+viewer.off('position-updated');
+```
+
+```javascript on/off — after (v5)
+const handler = ({ position }) => {
+    console.log(position.yaw);
+};
+
+viewer.addEventListener('position-updated', handler);
+
+viewer.removeEventListener('position-updated', handler);
+```
+
+</CodeGroup>
+
+<CodeGroup>
+
+```javascript once — before (v4)
+viewer.once('ready', () => {
+    console.log('viewer is ready!');
+});
+```
+
+```javascript once — after (v5)
+viewer.addEventListener('ready', () => {
+    console.log('viewer is ready');
+}, { once: true });
+```
+
+</CodeGroup>
+
+Note that the event data shape has also changed: properties like `longitude` on the `position-updated` event are now `yaw`, matching the option renames above.
+
+## TypeScript
+
+### Renamed types
+
+| v4 | v5 |
+|----|----|
+| `ViewerOptions` | `ViewerConfig` |
+| `ViewerProps` | `ViewerState` |
+| `EquirectangularAdapterOptions` | `EquirectangularAdapterConfig` |
+| `EquirectangularTilesAdapterOptions` | `EquirectangularTilesAdapterConfig` |
+| `EquirectangularVideoAdapterOptions` | `EquirectangularVideoAdapterConfig` |
+| `CubemapAdapterOptions` | `CubemapAdapterConfig` |
+| `CubemapTilesAdapterOptions` | `CubemapTilesAdapterConfig` |
+| `CubemapVideoAdapterOptions` | `CubemapVideoAdapterConfig` |
+| `AutorotateKeypointsPluginOptions` | `AutorotatePluginConfig` |
+| `CompassPluginOptions` | `CompassPluginConfig` |
+| `GalleryPluginOptions` | `GalleryPluginConfig` |
+| `GyroscopePluginOptions` | `GyroscopePluginConfig` |
+| `MarkersPluginOptions` | `MarkersPluginConfig` |
+| `MarkerProperties` | `MarkerConfig` |
+| `ResolutionPluginOptions` | `ResolutionPluginConfig` |
+| `SettingsPluginOptions` | `SettingsPluginConfig` |
+| `VideoPluginOptions` | `VideoPluginConfig` |
+| `AutorotateKeypoint` *(video plugin)* | `VideoKeypoint` |
+| `VisibleRangePluginOptions` | `VisibleRangePluginConfig` |
+
+### Deleted types
+
+The following types have been removed with no replacement:
+
+- `TooltipRenderer`
+- `CubemapArray`

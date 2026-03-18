@@ -1,0 +1,160 @@
+---
+title: "Settings plugin"
+description: "Add a settings panel to the viewer that other plugins can populate with toggle and option controls."
+---
+
+The Settings plugin adds a **Settings** button to the navbar and a settings panel that other plugins can populate. On its own it does nothing — it is a dependency for plugins such as [Resolution](/plugins/resolution).
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/settings-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/settings-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/settings-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { SettingsPlugin } from '@photo-sphere-viewer/settings-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        SettingsPlugin,
+    ],
+});
+
+const settingsPlugin = viewer.getPlugin(SettingsPlugin);
+```
+
+## Adding a setting
+
+Call `addSetting()` on the plugin instance. There are two setting types.
+
+### Toggle setting
+
+A toggle has only two states: `true` and `false`. Provide `active()` and `toggle()` callbacks.
+
+```javascript
+let enabled = false;
+
+settingsPlugin.addSetting({
+    id: 'custom-toggle-setting',
+    label: 'Toggle setting',
+    type: 'toggle',
+    active: () => enabled,
+    toggle: () => (enabled = !enabled),
+});
+```
+
+### Options setting
+
+An options setting has multiple values. Provide `current()`, `options()`, and `apply()` callbacks.
+
+```javascript
+let currentOption = 'A';
+
+settingsPlugin.addSetting({
+    id: 'custom-options-setting',
+    label: 'Options setting',
+    type: 'options',
+    options: () => [
+        { id: 'A', label: 'Option A' },
+        { id: 'B', label: 'Option B' },
+    ],
+    current: () => currentOption,
+    apply: (option) => (currentOption = option),
+});
+```
+
+<Note>
+  Both `label` values accept a key from the main viewer `lang` object for translation purposes.
+</Note>
+
+### Button badge
+
+A setting can expose a `badge` function whose return value is shown as a badge on the settings button itself. Only one setting can declare a badge at a time.
+
+```javascript
+settingsPlugin.addSetting({
+    // ...
+    badge: () => currentOption,
+});
+```
+
+## Configuration
+
+<ParamField path="persist" type="boolean" default="false">
+  Persist setting values across sessions using the configured `storage`. Not updatable after init.
+</ParamField>
+
+<ParamField path="storage" type="object" default="LocalStorage (key: psvSettings)">
+  Custom storage backend for persisting settings. Provide `get` and `set` methods. Not updatable after init.
+
+  ```typescript
+  {
+      get(settingId: string): boolean | string | Promise<boolean | string>;
+      set(settingId: string, value: boolean | string): void;
+  }
+  ```
+
+  Compatible with LocalForage, NgRx, a custom HTTP service, or any async key-value store.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      settings: 'Settings',
+  }
+  ```
+</ParamField>
+
+## Events
+
+#### `setting-changed`
+
+Triggered when a setting value changes.
+
+```javascript
+settingsPlugin.addEventListener('setting-changed', ({ settingId, settingValue }) => {
+    console.log(`${settingId}: ${settingValue}`);
+});
+```
+
+## Navbar buttons
+
+This plugin adds one button to the default navbar:
+
+- **`settings`** — opens the settings panel
+
+<Note>
+  If you use a custom navbar, add `'settings'` to your navbar configuration manually.
+</Note>
+
+## SCSS variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `$font` | `core.$caption-font` | Font used in the settings panel |
+| `$text-color` | `core.$panel-text-color` | Text color |
+| `$background` | `core.$panel-background` | Panel background color |
+| `$item-height` | `core.$panel-menu-item-height` | Height of each settings item |
+| `$item-padding` | `core.$panel-menu-item-padding` | Padding of each settings item |
+| `$hover-background` | `core.$panel-menu-hover-background` | Item background on hover |
+| `$badge-font` | `10px / .9 monospace` | Font of the button badge |
+| `$badge-text-color` | `white` | Text color of the badge |
+| `$badge-background` | `#111` | Background color of the badge |

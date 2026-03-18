@@ -1,0 +1,98 @@
+---
+title: "Equirectangular video adapter"
+description: "Display equirectangular 360° video panoramas, including live MediaStream sources and pre-existing HTMLVideoElement instances."
+---
+
+The equirectangular video adapter loads video files in equirectangular format and maps them onto the sphere in real time.
+
+<Warning>
+  This adapter requires the [VideoPlugin](/plugins/video) to be enabled.
+</Warning>
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/equirectangular-video-adapter
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/equirectangular-video-adapter
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { EquirectangularVideoAdapter } from '@photo-sphere-viewer/equirectangular-video-adapter';
+import { VideoPlugin } from '@photo-sphere-viewer/video-plugin';
+
+const viewer = new Viewer({
+    adapter: EquirectangularVideoAdapter,
+    panorama: {
+        source: 'path/video.mp4',
+    },
+    plugins: [VideoPlugin],
+});
+```
+
+## Adapter configuration
+
+<ParamField path="autoplay" type="boolean" default="false">
+  Automatically starts the video when the panorama is loaded.
+</ParamField>
+
+<ParamField path="muted" type="boolean" default="false">
+  Mutes the video by default.
+</ParamField>
+
+<ParamField path="resolution" type="number" default="64">
+  The number of faces of the sphere geometry. See the [equirectangular adapter](/adapters/equirectangular#configuration) for details.
+</ParamField>
+
+## Panorama options
+
+The `panorama` option and the `setPanorama()` method accept an object with the following fields.
+
+<ParamField path="source" type="string | MediaStream | HTMLVideoElement" required>
+  The video source. Can be:
+
+  - A URL string pointing to the video file. The video must not exceed 4096 pixels in either dimension.
+  - A `MediaStream` — for example, the feed from a USB 360° camera.
+  - An `HTMLVideoElement` — when you need full control over video playback externally.
+
+  ```javascript
+  // File URL
+  panorama: { source: 'path/video.mp4' }
+
+  // Live camera stream
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+  const viewer = new Viewer({
+      container: 'photosphere',
+      adapter: EquirectangularVideoAdapter.withConfig({
+          autoplay: true,
+          muted: true,
+      }),
+      panorama: { source: stream },
+  });
+  ```
+</ParamField>
+
+<ParamField path="data" type="object | function">
+  Cropping data for videos that do not cover the full sphere. Follows the same structure as the equirectangular adapter's `panoData`.
+
+  ```javascript
+  panorama: {
+      source: 'path/video.mp4',
+      data: {
+          fullWidth: 6000,
+          // fullHeight is optional, always fullWidth / 2
+          croppedX: 1000,
+          croppedY: 500,
+      },
+  }
+  ```
+</ParamField>

@@ -1,0 +1,141 @@
+---
+title: "Navbar"
+description: "Configure the Photo Sphere Viewer navbar: built-in buttons, plugin buttons, and custom button creation."
+---
+
+## Built-in buttons
+
+The `navbar` option accepts an array of button identifiers and/or custom button objects. The following built-in identifiers are available:
+
+| Identifier | Description |
+|---|---|
+| `zoomOut` | Zoom out button |
+| `zoomRange` | Zoom slider |
+| `zoomIn` | Zoom in button |
+| `zoom` | Shorthand for `zoomOut` + `zoomRange` + `zoomIn` |
+| `moveLeft` | Pan left button |
+| `moveRight` | Pan right button |
+| `moveTop` | Pan up button |
+| `moveDown` | Pan down button |
+| `move` | Shorthand for `moveLeft` + `moveRight` + `moveTop` + `moveDown` |
+| `download` | Download the panorama |
+| `description` | Open the description panel |
+| `caption` | Display the caption text |
+| `fullscreen` | Toggle fullscreen |
+
+```javascript
+const viewer = new Viewer({
+  navbar: [
+    'zoom',
+    'move',
+    'caption',
+    'fullscreen',
+  ],
+});
+```
+
+---
+
+## Plugin buttons
+
+Plugins can register their own navbar buttons. When you do **not** override the `navbar` option, plugin buttons appear automatically. When you **do** provide a custom `navbar` array, you must explicitly include the plugin button identifiers.
+
+The button identifier for each plugin is listed on its documentation page.
+
+```javascript
+const viewer = new Viewer({
+  plugins: [MarkersPlugin, VirtualTourPlugin],
+  navbar: [
+    'zoom',
+    'caption',
+    'markers',        // MarkersPlugin button id
+    'virtual-tour',   // VirtualTourPlugin button id
+    'fullscreen',
+  ],
+});
+```
+
+---
+
+## Custom buttons
+
+You can include arbitrary custom buttons in the `navbar` array. A custom button is a plain object with the following fields:
+
+<ParamField path="content" type="string | HTMLElement | NavbarButtonElement" required>
+  Content of the button. Preferably a square image or SVG icon string.
+
+  <Tip>
+    `content` can also be an existing DOM element or a [Web Component](https://developer.mozilla.org/docs/Web/API/Web_components/Using_custom_elements). If your component has an `attachViewer()` method, it will be called with the viewer instance as its first argument.
+  </Tip>
+</ParamField>
+
+<ParamField path="onClick" type="function(viewer)">
+  Function called when the button is clicked. Receives the `Viewer` instance.
+</ParamField>
+
+<ParamField path="id" type="string">
+  Unique identifier for the button. Required if you want to reference the button later via `viewer.navbar.getButton()`.
+</ParamField>
+
+<ParamField path="title" type="string">
+  Tooltip text shown on mouse hover. For i18n, this can be a key in the main [`lang`](/guide/configuration#lang) object.
+</ParamField>
+
+<ParamField path="className" type="string">
+  CSS class name added to the button element.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Initially renders the button in a disabled state.
+</ParamField>
+
+<ParamField path="visible" type="boolean" default="true">
+  Initially shows or hides the button.
+</ParamField>
+
+### Example: custom button
+
+```javascript
+const viewer = new Viewer({
+  navbar: [
+    'zoom',
+    'caption',
+    {
+      id: 'my-button',
+      content: '<svg>...</svg>',
+      title: 'My action',
+      className: 'my-button-class',
+      onClick: (viewer) => {
+        console.log('button clicked', viewer.getPosition());
+      },
+    },
+    'fullscreen',
+  ],
+});
+```
+
+---
+
+## Controlling buttons at runtime
+
+Once the viewer is initialized, you can show, hide, enable, or disable any button by its `id`:
+
+```javascript
+// Show a previously hidden button
+viewer.navbar.getButton('my-button').show();
+
+// Hide a button
+viewer.navbar.getButton('my-button').hide();
+```
+
+---
+
+## Disabling the navbar
+
+Set `navbar` to `false` (or omit it entirely if it is not needed) to hide the navbar completely. Note that the `caption` option will also have no visible effect when the navbar is disabled.
+
+```javascript
+const viewer = new Viewer({
+  navbar: false,
+});
+```

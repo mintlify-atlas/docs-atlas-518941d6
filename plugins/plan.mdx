@@ -1,0 +1,255 @@
+---
+title: "Plan plugin"
+description: "Display a geographic map (OpenStreetMap or custom tile layer) showing the panorama's GPS position and optional hotspots."
+---
+
+The Plan plugin embeds a [Leaflet](https://leafletjs.com) map into the viewer overlay showing the GPS location of the panorama. It uses OpenStreetMap by default but supports any Leaflet-compatible tile layer. Clickable hotspots can also be displayed on the map.
+
+<Tip>
+  Looking for a custom image map (floor plan, site plan, etc.)? Use the [Map plugin](/plugins/map) instead.
+</Tip>
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/plan-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/plan-plugin
+```
+
+</CodeGroup>
+
+<Warning>
+  The Plan plugin requires Leaflet. Import both the Leaflet JavaScript and CSS files before using this plugin.
+</Warning>
+
+<Note>
+  This plugin also requires its own stylesheet. Import `@photo-sphere-viewer/plan-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+The only required option is `coordinates` — the GPS position of the panorama.
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { PlanPlugin } from '@photo-sphere-viewer/plan-plugin';
+
+const viewer = new Viewer({
+    plugins: [
+        PlanPlugin.withConfig({
+            coordinates: [6.79077, 44.58041], // [longitude, latitude]
+        }),
+    ],
+});
+```
+
+## Configuration
+
+<ParamField path="coordinates" type="[number, number]" required>
+  GPS position of the panorama as `[longitude, latitude]`. Updatable. You can also call `setCoordinates()`.
+</ParamField>
+
+<ParamField path="bearing" type="number | string" default="0">
+  Rotation offset applied to the central pin to align it with the panorama's orientation. Updatable.
+</ParamField>
+
+<ParamField path="layers" type="array" default="OpenStreetMap">
+  Available base tile layers. When more than one layer is configured, a button lets the user switch between them. Each entry is an object with:
+
+  - `name` — display name
+  - `urlTemplate` — tile URL template for standard raster tiles (e.g. `'https://tile.openstreetmap.org/{z}/{x}/{y}.png'`)
+  - `layer` — any custom Leaflet layer instance (alternative to `urlTemplate`)
+  - `attribution` — attribution text
+
+  ```javascript
+  layers: [
+      {
+          name: 'OpenStreetMap',
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          attribution: '&copy; OpenStreetMap',
+      },
+      {
+          name: 'OpenTopoMap',
+          layer: new L.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+              subdomains: ['a', 'b', 'c'],
+              maxZoom: 17,
+          }),
+          attribution: '&copy; OpenTopoMap',
+      },
+  ]
+  ```
+
+  Ignored when `configureLeaflet` is used.
+</ParamField>
+
+<ParamField path="configureLeaflet" type="function">
+  `(map) => void`. Callback for full manual Leaflet configuration. When provided, the default tile layer is not applied.
+
+  ```javascript
+  configureLeaflet(map) {
+      // use the full Leaflet API: https://leafletjs.com/reference.html
+  }
+  ```
+</ParamField>
+
+<ParamField path="size" type="{ width: string, height: string }" default="{ width: '300px', height: '200px' }">
+  Size of the widget. Accepts any CSS length unit. Updatable.
+</ParamField>
+
+<ParamField path="position" type="string" default="'bottom left'">
+  Position of the widget on screen. Accepted values: combinations of `top`/`bottom` and `left`/`right`. Updatable.
+</ParamField>
+
+<ParamField path="pinImage" type="string">
+  SVG or image URL for the central position pin. Defaults to a built-in SVG. Updatable.
+</ParamField>
+
+<ParamField path="pinSize" type="number" default="35">
+  Size of the central pin in pixels. Updatable.
+</ParamField>
+
+<ParamField path="hotspots" type="PlanHotspot[]" default="null">
+  Markers visible on the map. Updatable. See [Hotspots](#hotspots) below. You can also call `setHotspots()`.
+
+  <Tip>
+    Markers from the Markers plugin appear on the plan map by setting their `plan` data property to a hotspot object. The marker tooltip is reused and clicking a plan hotspot rotates the viewer to face the marker.
+  </Tip>
+</ParamField>
+
+<ParamField path="spotStyle" type="object">
+  Default style for hotspots. Updatable. Individual hotspots can override with their own `style`.
+
+  | Field | Type | Default | Description |
+  |---|---|---|---|
+  | `size` | `number` | `15` | Hotspot diameter |
+  | `image` | `string` | — | SVG or image URL |
+  | `color` | `string` | `'white'` | Fill color when no image |
+  | `borderSize` | `number` | `0` | Border width |
+  | `borderColor` | `string` | `null` | Border color |
+  | `hoverSize` | `number` | `null` | Size on hover |
+  | `hoverImage` | `string` | `null` | Image on hover |
+  | `hoverColor` | `string` | `null` | Color on hover |
+  | `hoverBorderSize` | `number` | `4` | Border width on hover |
+  | `hoverBorderColor` | `string` | `'rgba(255,255,255,0.8)'` | Border color on hover |
+</ParamField>
+
+<ParamField path="defaultZoom" type="number" default="15">
+  Initial Leaflet zoom level.
+</ParamField>
+
+<ParamField path="visibleOnLoad" type="boolean" default="true">
+  Show the map when the first panorama loads.
+</ParamField>
+
+<ParamField path="minimizeOnHotspotClick" type="boolean" default="true">
+  Minimize the map when the user clicks a hotspot or marker. Updatable.
+</ParamField>
+
+<ParamField path="buttons" type="object" default="{ maximize: true, close: true, reset: true }">
+  Control which buttons are visible around the map widget.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      map: 'Map',
+      mapMaximize: 'Maximize',
+      mapMinimize: 'Minimize',
+      mapReset: 'Reset',
+      mapLayers: 'Base layer',
+  }
+  ```
+</ParamField>
+
+## Hotspots
+
+<ParamField path="id" type="string">
+  Identifier used to match `select-hotspot` events. Auto-generated if not set.
+</ParamField>
+
+<ParamField path="coordinates" type="[number, number]" required>
+  GPS position of the hotspot as `[longitude, latitude]`.
+</ParamField>
+
+<ParamField path="style" type="object">
+  Overrides the default `spotStyle` for this hotspot.
+</ParamField>
+
+<ParamField path="tooltip" type="string | { content: string, className: string }">
+  Tooltip shown when hovering the hotspot.
+</ParamField>
+
+## Methods
+
+#### `setHotspots(hotspots)`
+
+Replaces all hotspots.
+
+```javascript
+planPlugin.setHotspots([
+    { id: '1', coordinates: [6.79077, 44.58041], tooltip: 'Hotspot one' },
+    { id: '2', coordinates: [6.79100, 44.58060] },
+]);
+```
+
+#### `clearHotspots()`
+
+Removes all hotspots.
+
+#### `setCoordinates(coordinates)`
+
+Updates the panorama's GPS position on the map.
+
+```javascript
+planPlugin.setCoordinates([6.79077, 44.58041]);
+```
+
+#### `close()` / `open()`
+
+Toggles between closed and open states.
+
+#### `maximize()` / `minimize()`
+
+Toggles between maximized and minimized views. Has no effect when the map is closed.
+
+#### `getLeaflet()`
+
+Returns the underlying Leaflet map instance for direct access to the Leaflet API.
+
+#### `setZoom(level)`
+
+Sets the Leaflet zoom level.
+
+## Events
+
+#### `select-hotspot(hotspotId)`
+
+Fired when the user clicks a hotspot.
+
+```javascript
+planPlugin.addEventListener('select-hotspot', ({ hotspotId }) => {
+    console.log(`Clicked hotspot ${hotspotId}`);
+});
+```
+
+#### `view-changed(view)`
+
+Fired when the map state changes. `view` is `'maximized'`, `'normal'`, or `'closed'`.
+
+## SCSS variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `$radius` | `8px` | Corner radius of the widget |
+| `$shadow` | `0 0 5px rgba(0,0,0,.7)` | Widget shadow |
+| `$button-size` | `34px` | Button size |
+| `$button-background` | `rgba(0,0,0,.5)` | Button background |
+| `$button-color` | `white` | Button icon color |
+| `$transition` | `ease-in-out .3s` | Animation transition |

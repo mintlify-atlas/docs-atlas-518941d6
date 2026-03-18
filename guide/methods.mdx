@@ -1,0 +1,277 @@
+---
+title: "Methods"
+description: "Viewer methods for controlling Photo Sphere Viewer programmatically, including navigation, zoom, panorama loading, and fullscreen."
+---
+
+## Overview
+
+Photo Sphere Viewer exposes methods directly on the `Viewer` instance. The full list is available in the [API reference](https://photo-sphere-viewer.js.org/api/classes/Core.Viewer.html).
+
+<Tip>
+  Photo Sphere Viewer is split into multiple internal components. Some methods live on sub-objects rather than the viewer directly. For example, navbar methods are on `viewer.navbar`. See [reusable components](https://photo-sphere-viewer.js.org/guide/components/) for details.
+</Tip>
+
+It is good practice to wait for the `ready` event before calling any method:
+
+```javascript
+viewer.addEventListener('ready', () => {
+  viewer.rotate({
+    textureX: 1500,
+    textureY: 1000,
+  });
+}, { once: true });
+```
+
+---
+
+## Position definitions
+
+Methods that accept a position argument support two coordinate systems:
+
+- **Spherical**: `yaw` and `pitch` values in radians or degrees (e.g. `{ yaw: Math.PI, pitch: '20deg' }`)
+- **Texture**: `textureX` and `textureY` pixel coordinates on the source image (e.g. `{ textureX: 1500, textureY: 600 }`)
+
+When using a [cubemap adapter](/adapters/cubemap), you must also provide `textureFace`.
+
+---
+
+## Navigation
+
+### `animate(options)`
+
+**Returns:** `Animation` (a Promise with an additional `.cancel()` method)
+
+Smoothly rotates and zooms the view. You can target a position (`yaw`/`pitch` or `textureX`/`textureY`) and/or a zoom level.
+
+The `speed` option accepts a duration in milliseconds or a revolutions-per-minute string:
+
+```javascript
+viewer.animate({
+  yaw: Math.PI / 2,
+  pitch: '20deg',
+  zoom: 50,
+  speed: '2rpm',
+}).then(() => {
+  // animation complete
+});
+```
+
+Cancel an in-progress animation:
+
+```javascript
+const animation = viewer.animate({ yaw: Math.PI, speed: 1000 });
+animation.cancel();
+```
+
+### `stopAnimation()`
+
+**Returns:** `PromiseLike<any>`
+
+Stops the current animation. Returns a promise that resolves once the animation has been cancelled.
+
+### `rotate(position)`
+
+Immediately rotates the view to the given position without any animation.
+
+```javascript
+// Using texture coordinates
+viewer.rotate({
+  textureX: 1500,
+  textureY: 600,
+});
+
+// Using spherical coordinates
+viewer.rotate({
+  yaw: Math.PI / 4,
+  pitch: '10deg',
+});
+```
+
+---
+
+## Zoom
+
+### `zoom(level)`
+
+Sets the zoom level instantly. `level` is a number between `0` (maximum FOV, zoomed out) and `100` (minimum FOV, zoomed in).
+
+### `zoomIn([step = 1])`
+
+Increases the zoom level by `step`.
+
+### `zoomOut([step = 1])`
+
+Decreases the zoom level by `step`.
+
+### `getZoomLevel()`
+
+**Returns:** `number`
+
+Returns the current zoom level between `0` and `100`.
+
+---
+
+## Panorama
+
+### `setPanorama(panorama[, options])`
+
+**Returns:** `Promise<boolean>` — resolves to `false` if the loading was aborted by another call
+
+Loads a new panorama, with an optional transition animation (enabled by default). If another load is already in progress it is aborted.
+
+```javascript
+// Basic usage
+viewer.setPanorama('image.jpg').then(() => {
+  // update complete
+});
+
+// Disable transition
+viewer.setPanorama('image.jpg', { transition: false });
+
+// Full options
+viewer.setPanorama('image.jpg', {
+  caption: 'The new caption',
+  position: { yaw: 0, pitch: 0 },
+  transition: {
+    rotation: false,
+    effect: 'black',
+  },
+});
+```
+
+---
+
+## State
+
+### `getPosition()`
+
+**Returns:** `Position`
+
+Returns the current camera position as `{ yaw: number, pitch: number }`.
+
+### `getSize()`
+
+**Returns:** `Size`
+
+Returns the current viewer size as `{ width: number, height: number }`.
+
+### `isFullscreenEnabled()`
+
+**Returns:** `boolean`
+
+Returns `true` if the viewer is currently in fullscreen.
+
+---
+
+## Options
+
+### `setOption(option, value)`
+
+Updates a single configuration option at runtime.
+
+```javascript
+viewer.setOption('fisheye', true);
+```
+
+<Note>
+  The following options cannot be changed after initialization: `panorama`, `panoData`, `container`, `adapter`, and `plugins`.
+</Note>
+
+### `setOptions(options)`
+
+Updates multiple options at once.
+
+```javascript
+viewer.setOptions({
+  fisheye: true,
+  moveSpeed: 1.5,
+});
+```
+
+---
+
+## Fullscreen
+
+### `enterFullscreen()`
+
+Enters fullscreen mode.
+
+### `exitFullscreen()`
+
+Exits fullscreen mode.
+
+### `toggleFullscreen()`
+
+Enters or exits fullscreen depending on the current state.
+
+---
+
+## Keyboard
+
+### `startKeyboardControl()`
+
+Enables keyboard controls manually. Normally managed automatically based on the [`keyboard`](/guide/configuration#keyboard) option.
+
+### `stopKeyboardControl()`
+
+Disables keyboard controls manually.
+
+---
+
+## UI
+
+### `createTooltip(config)`
+
+**Returns:** `Tooltip`
+
+Creates a new tooltip. Use `tooltip.move()` to reposition an existing tooltip without recreating it.
+
+### `showError(message)`
+
+Displays an error overlay with the given message.
+
+### `hideError()`
+
+Hides the error overlay.
+
+### `setCursor(cursor)`
+
+Changes the global mouse cursor. Pass `null` to restore the default cursor based on the `mousemove` setting.
+
+### `needsUpdate()`
+
+Requests a single re-render of the scene on the next frame.
+
+### `needsContinuousUpdate(enabled)`
+
+Enables or disables continuous rendering. Useful when displaying videos.
+
+### `resize(size)`
+
+Resizes the viewer container.
+
+---
+
+## Plugins
+
+### `getPlugin(pluginId)`
+
+**Returns:** plugin instance
+
+Returns the instance of a loaded plugin.
+
+```javascript
+// By plugin id string
+const markers = viewer.getPlugin('markers');
+
+// By plugin class (TypeScript — provides full type information)
+const markers = viewer.getPlugin(MarkersPlugin);
+```
+
+---
+
+## Lifecycle
+
+### `destroy()`
+
+Removes the viewer from the page and frees all memory used by Three.js and internal services. After calling this method the viewer instance should not be used.

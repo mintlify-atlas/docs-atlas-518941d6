@@ -1,0 +1,135 @@
+---
+title: "Cubemap tiles adapter"
+description: "Reduce initial load time and bandwidth by slicing large cubemap faces into tiles loaded on demand. Supports single and multi-level tile sets."
+---
+
+The cubemap tiles adapter reduces the initial loading time and bandwidth consumption by slicing large cubemap faces into many smaller tiles. Only the tiles visible at the current zoom level and viewport position are loaded.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/cubemap-tiles-adapter
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/cubemap-tiles-adapter
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { CubemapTilesAdapter } from '@photo-sphere-viewer/cubemap-tiles-adapter';
+
+const viewer = new Viewer({
+    adapter: CubemapTilesAdapter,
+    panorama: {
+        faceSize: 6000,
+        nbTiles: 8,
+        baseUrl: {
+            left:   'left_low.jpg',
+            front:  'front_low.jpg',
+            right:  'right_low.jpg',
+            back:   'back_low.jpg',
+            top:    'top_low.jpg',
+            bottom: 'bottom_low.jpg',
+        },
+        tileUrl: (face, col, row) => {
+            return `${face}_${col}_${row}.jpg`;
+        },
+    },
+});
+```
+
+<Note>
+  Pixel positions with this adapter require an additional `textureFace` attribute (example: `{ textureFace: 'front', textureX: 200, textureY: 800 }`). The position refers to the full size of the face (the first level when using multi-level tiles).
+</Note>
+
+## Adapter configuration
+
+<ParamField path="baseBlur" type="boolean" default="true">
+  Applies a blur filter to the base image (`baseUrl`). This softens the low-resolution placeholder while tiles are loading.
+</ParamField>
+
+<ParamField path="showErrorTile" type="boolean" default="true">
+  Shows a warning sign on tiles that cannot be loaded.
+</ParamField>
+
+<ParamField path="antialias" type="boolean" default="true">
+  Applies antialiasing to high-resolution tiles.
+</ParamField>
+
+## Panorama options
+
+The `panorama` option and the `setPanorama()` method accept either a single tile level configuration or a multi-level configuration for adaptive resolution based on zoom level.
+
+### Single level
+
+<ParamField path="faceSize" type="number" required>
+  Size in pixels of one face of the cube.
+</ParamField>
+
+<ParamField path="nbTiles" type="number" required>
+  Number of columns and rows on each face. Each tile must be square. Must be a power of two (`2`, `4`, `8`, `16`). Maximum value is `16`.
+</ParamField>
+
+<ParamField path="tileUrl" type="(face: string, col: number, row: number) => string | null" required>
+  Function that returns the URL for a given tile. The `face` argument is one of `'left'`, `'front'`, `'right'`, `'back'`, `'top'`, `'bottom'`. Return `null` to skip loading a specific tile.
+</ParamField>
+
+<ParamField path="flipTopBottom" type="boolean" default="false">
+  Set to `true` if the top and bottom faces are not correctly oriented. See the [cubemap adapter](/adapters/cubemap#panorama-options) for context.
+</ParamField>
+
+<ParamField path="baseUrl" type="any">
+  Low-resolution complete panorama image to display while tiles are loading. Accepts the same format as the [cubemap adapter panorama options](/adapters/cubemap#panorama-options).
+</ParamField>
+
+### Multiple levels
+
+Provide multiple tile configurations to serve different resolutions at different zoom levels. The best level is chosen automatically.
+
+<ParamField path="levels" type="array" required>
+  Array of tile level configurations. Each element has `faceSize` and `nbTiles`.
+
+  ```javascript
+  levels: [
+      { faceSize: 3000,  nbTiles: 4  },
+      { faceSize: 6000,  nbTiles: 8  },
+      { faceSize: 12000, nbTiles: 16 },
+  ]
+  ```
+</ParamField>
+
+<ParamField path="tileUrl" type="(face: string, col: number, row: number, level: number) => string | null" required>
+  Function that returns the URL for a given tile at a given level index. The `face` argument is one of `'left'`, `'front'`, `'right'`, `'back'`, `'top'`, `'bottom'`. Return `null` to skip loading a specific tile.
+</ParamField>
+
+<ParamField path="flipTopBottom" type="boolean" default="false">
+  Set to `true` if the top and bottom faces are not correctly oriented.
+</ParamField>
+
+<ParamField path="baseUrl" type="any">
+  Low-resolution complete panorama to display while tiles are loading.
+</ParamField>
+
+## Preparing the panorama
+
+Use [ImageMagick](https://imagemagick.org) to split each cubemap face into tiles. The following example splits a 6,000×6,000 face into 8×8 tiles (750×750 px each):
+
+```bash
+magick.exe front.jpg \
+  -crop 750x750 -quality 95 \
+  -set filename:tile "%[fx:page.x/750]_%[fx:page.y/750]" \
+  -set filename:orig %t \
+  %[filename:orig]_%[filename:tile].jpg
+```
+
+Repeat the command for each of the six faces. You can also use the [PineTools split image tool](https://pinetools.com/split-image).
+
+<Tip>
+  Keep individual tile sizes at or below 1024×1024 pixels. This limits the maximum face size to 16,384×16,384 pixels (1.6 gigapixels total for all six faces).
+</Tip>

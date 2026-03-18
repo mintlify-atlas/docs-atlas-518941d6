@@ -1,0 +1,196 @@
+---
+title: "Video plugin"
+description: "Add playback controls, a progress bar, and volume management to 360° video panoramas."
+---
+
+The Video plugin adds a full set of playback controls to video panoramas. It works with the equirectangular video adapter and the cubemap video adapter, and supports timed autorotate keypoints synchronized to the video timeline.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/video-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/video-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/video-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+You must load one of the video adapters alongside this plugin: [equirectangular video](/adapters/equirectangular-video) or [cubemap video](/adapters/cubemap-video).
+
+Once loaded the plugin adds the following UI elements:
+
+- Play/pause button in the navbar
+- Volume button in the navbar
+- Time indicator in the navbar
+- Progress bar above the navbar
+- Large play button in the center of the viewer
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { EquirectangularVideoAdapter } from '@photo-sphere-viewer/equirectangular-video-adapter';
+import { VideoPlugin } from '@photo-sphere-viewer/video-plugin';
+
+const viewer = new Viewer({
+    adapter: EquirectangularVideoAdapter,
+    panorama: {
+        source: 'path/video.mp4',
+    },
+    plugins: [
+        VideoPlugin,
+    ],
+});
+```
+
+### Multiple resolutions
+
+Pair the Video plugin with the [Settings plugin](/plugins/settings) and [Resolution plugin](/plugins/resolution) to offer quality options:
+
+```javascript
+import { VideoPlugin } from '@photo-sphere-viewer/video-plugin';
+import { SettingsPlugin } from '@photo-sphere-viewer/settings-plugin';
+import { ResolutionPlugin } from '@photo-sphere-viewer/resolution-plugin';
+
+const viewer = new Viewer({
+    adapter: EquirectangularVideoAdapter,
+    plugins: [
+        VideoPlugin,
+        SettingsPlugin,
+        ResolutionPlugin.withConfig({
+            defaultResolution: 'FHD',
+            resolutions: [
+                {
+                    id: 'UHD',
+                    label: 'Ultra high',
+                    panorama: { source: 'path/video-uhd.mp4' },
+                },
+                {
+                    id: 'FHD',
+                    label: 'High',
+                    panorama: { source: 'path/video-fhd.mp4' },
+                },
+                {
+                    id: 'HD',
+                    label: 'Standard',
+                    panorama: { source: 'path/video-hd.mp4' },
+                },
+            ],
+        }),
+    ],
+});
+```
+
+## Configuration
+
+<ParamField path="keypoints" type="Array<{ position, time }>">
+  Timed keypoints used by the autorotate button to follow the video timeline. Not updatable after init — use `setKeypoints()` instead.
+
+  ```javascript
+  keypoints: [
+      { time: 0,    position: { yaw: 0,    pitch: 0 } },
+      { time: 5.5,  position: { yaw: 0.25, pitch: 0 } },
+      { time: 12.8, position: { yaw: 0.3,  pitch: -12 } },
+  ]
+  ```
+
+  <Warning>
+    Using keypoints requires the [Autorotate plugin](/plugins/autorotate) to be loaded.
+  </Warning>
+</ParamField>
+
+<ParamField path="progressbar" type="boolean" default="true">
+  Display a progress bar above the navbar. Not updatable after init.
+</ParamField>
+
+<ParamField path="bigbutton" type="boolean" default="true">
+  Display a large play button in the center of the viewer. Not updatable after init.
+</ParamField>
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      videoPlay: 'Play/Pause',
+      videoVolume: 'Volume',
+  }
+  ```
+</ParamField>
+
+## Methods
+
+#### `setKeypoints(keypoints)`
+
+Replaces the current timed keypoints.
+
+## Events
+
+#### `play-pause`
+
+Triggered when the video starts playing or is paused.
+
+```javascript
+videoPlugin.addEventListener('play-pause', ({ playing }) => {
+    console.log('Playing:', playing);
+});
+```
+
+#### `volume-change`
+
+Triggered when the video volume changes.
+
+```javascript
+videoPlugin.addEventListener('volume-change', ({ volume }) => {
+    console.log('Volume:', volume);
+});
+```
+
+#### `progress`
+
+Triggered as the video plays.
+
+```javascript
+videoPlugin.addEventListener('progress', ({ time, duration, progress }) => {
+    console.log(`${time}s / ${duration}s (${Math.round(progress * 100)}%)`);
+});
+```
+
+## Navbar buttons
+
+This plugin adds the following items to the default navbar:
+
+- **`videoPlay`** — play/pause the video
+- **`videoVolume`** — change volume or mute
+- **`videoTime`** — displays current time and duration (not interactive)
+
+<Note>
+  If you use a custom navbar, add these identifiers to your navbar configuration manually.
+</Note>
+
+## SCSS variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `$progressbar-height` | `3px` | Height of the progress bar |
+| `$progressbar-height-active` | `5px` | Height of the progress bar on mouse hover |
+| `$progressbar-progress-color` | `core.$buttons-color` | Color of the playing progress |
+| `$progressbar-buffer-color` | `core.$buttons-active-background` | Color of the buffered progress |
+| `$progressbar-handle-size` | `9px` | Size of the seek handle |
+| `$progressbar-handle-color` | `white` | Color of the seek handle |
+| `$volume-height` | `80px` | Height of the volume control |
+| `$volume-width` | `$progressbar-height-active` | Width of the volume control |
+| `$volume-bar-color` | `$progressbar-progress-color` | Color of the volume bar |
+| `$volume-track-color` | `$progressbar-buffer-color` | Background of the volume track |
+| `$volume-handle-size` | `$progressbar-handle-size` | Size of the volume handle |
+| `$volume-handle-color` | `$progressbar-handle-color` | Color of the volume handle |
+| `$bigbutton-color` | `core.$buttons-color` | Color of the central play button |
+| `$bigbutton-size` | `20vw` (portrait) / `10vw` (landscape) | Size of the central play button |

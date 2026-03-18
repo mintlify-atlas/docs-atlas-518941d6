@@ -1,0 +1,377 @@
+---
+title: "Virtual tour plugin"
+description: "Link multiple panoramas into an explorable virtual tour with navigation arrows, GPS positioning, and optional integration with gallery, map, and plan plugins."
+---
+
+The Virtual Tour plugin connects multiple panoramas into a navigable tour. Users move between nodes by clicking arrow links. Nodes can be positioned manually or automatically from GPS coordinates, and data can be supplied all at once or loaded on demand from a server.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/virtual-tour-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/virtual-tour-plugin
+```
+
+</CodeGroup>
+
+<Note>
+  This plugin requires its stylesheet. Import `@photo-sphere-viewer/virtual-tour-plugin/index.css` or add the CDN link to your `<head>`.
+</Note>
+
+## Usage
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { VirtualTourPlugin } from '@photo-sphere-viewer/virtual-tour-plugin';
+
+const viewer = new Viewer({
+    plugins: [
+        VirtualTourPlugin.withConfig({
+            nodes: [...],
+            // or for server mode:
+            // getNode: async (id) => { ... },
+            // startNodeId: 'node-1',
+        }),
+    ],
+});
+```
+
+## Data mode
+
+<Tabs>
+  <Tab title="Client mode">
+    Provide all nodes upfront in the `nodes` array. You can replace them later with `setNodes()`.
+
+    ```javascript
+    VirtualTourPlugin.withConfig({
+        nodes: [
+            {
+                id: 'node-1',
+                panorama: '001.jpg',
+                links: [{ nodeId: 'node-2', position: { textureX: 1500, textureY: 780 } }],
+            },
+            {
+                id: 'node-2',
+                panorama: '002.jpg',
+                links: [{ nodeId: 'node-1', position: { textureX: 3000, textureY: 780 } }],
+            },
+        ],
+    })
+    ```
+  </Tab>
+  <Tab title="Server mode">
+    Provide a `getNode` callback that fetches node data on demand. Set `startNodeId` to define the initial node.
+
+    ```javascript
+    VirtualTourPlugin.withConfig({
+        startNodeId: 'node-1',
+        getNode: async (nodeId) => {
+            const res = await fetch(`/api/nodes/${nodeId}`);
+            return await res.json();
+        },
+    })
+    ```
+  </Tab>
+</Tabs>
+
+## Position mode
+
+<Tabs>
+  <Tab title="Manual mode">
+    Each link specifies its position on the panorama using `yaw`/`pitch` or `textureX`/`textureY` coordinates.
+
+    ```javascript
+    const node = {
+        id: 'node-1',
+        panorama: '001.jpg',
+        links: [
+            {
+                nodeId: 'node-2',
+                position: { textureX: 1500, textureY: 780 },
+            },
+        ],
+    };
+    ```
+  </Tab>
+  <Tab title="GPS mode">
+    Each node has GPS coordinates. Links are positioned automatically based on the bearing between nodes.
+
+    ```javascript
+    const node = {
+        id: 'node-1',
+        panorama: '001.jpg',
+        gps: [-80.156479, 25.666725], // [longitude, latitude, altitude?]
+        links: [
+            {
+                nodeId: 'node-2',
+                gps: [-80.156168, 25.666623], // required in server mode
+            },
+        ],
+    };
+    ```
+
+    <Warning>
+      Only the EPSG:4326 projection (standard WGS-84 longitude/latitude) is supported.
+    </Warning>
+  </Tab>
+</Tabs>
+
+<Tip>
+  The Gallery, Map, Plan, and Compass plugins integrate seamlessly with the virtual tour.
+</Tip>
+
+## Node definition
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the node.
+</ParamField>
+
+<ParamField path="panorama" required>
+  The panorama to display. Accepts the same value as the main viewer `panorama` option.
+</ParamField>
+
+<ParamField path="links" type="array" required>
+  Links to other nodes from this node. Required in client mode. See [Links](#links) below.
+</ParamField>
+
+<ParamField path="gps" type="number[]">
+  GPS coordinates of the node: `[longitude, latitude, altitude?]`. Required when using `positionMode: 'gps'`.
+</ParamField>
+
+<ParamField path="name" type="string">
+  Short name shown in link tooltips and the Gallery plugin.
+</ParamField>
+
+<ParamField path="caption" type="string">
+  Caption displayed in the viewer header. Same as the main viewer `caption` option.
+</ParamField>
+
+<ParamField path="description" type="string">
+  Description text. Same as the main viewer `description` option.
+</ParamField>
+
+<ParamField path="thumbnail" type="string">
+  Thumbnail URL used in the Gallery plugin.
+</ParamField>
+
+<ParamField path="showInGallery" type="boolean" default="true">
+  Whether to show this node in the Gallery plugin.
+</ParamField>
+
+<ParamField path="markers" type="MarkerConfig[]">
+  Additional markers to display on this node. Requires the Markers plugin. Markers can use standard `position` (yaw/pitch) or, in GPS mode, a `gps` coordinate.
+</ParamField>
+
+<ParamField path="map">
+  Hotspot configuration for the Map plugin (client mode only). Set to `false` to hide this node from the map.
+</ParamField>
+
+<ParamField path="plan">
+  Hotspot configuration for the Plan plugin (client + GPS mode only). Set to `false` to hide this node from the plan.
+</ParamField>
+
+<ParamField path="panoData" type="object">
+  Panorama data passed to the viewer. Same as the main viewer `panoData` option.
+</ParamField>
+
+<ParamField path="sphereCorrection" type="object">
+  Sphere correction applied to the panorama. Same as the main viewer `sphereCorrection` option.
+</ParamField>
+
+<ParamField path="data" type="any">
+  Arbitrary data attached to the node.
+</ParamField>
+
+## Links
+
+<ParamField path="nodeId" type="string" required>
+  ID of the target node.
+</ParamField>
+
+<ParamField path="position" type="{ yaw, pitch } | { textureX, textureY }">
+  Position of the link on the panorama in spherical or texture coordinates. Required in manual mode.
+</ParamField>
+
+<ParamField path="gps" type="number[]">
+  GPS coordinates of the target node. Required in GPS + server mode so the link can be positioned without loading the target node first.
+</ParamField>
+
+<ParamField path="linkOffset" type="{ yaw?, pitch?, depth? }">
+  Positional offset applied to the arrow. Adjusting this moves the displayed arrow without changing where the viewer rotates when the link is clicked. `depth` is used in 3D render mode to manage overlapping arrows.
+</ParamField>
+
+<ParamField path="arrowStyle" type="object">
+  Overrides the global `arrowStyle` for this specific link.
+</ParamField>
+
+<ParamField path="data" type="any">
+  Arbitrary data attached to the link.
+</ParamField>
+
+## Plugin configuration
+
+<ParamField path="dataMode" type="'client' | 'server'" default="'client'">
+  How node data is provided. Not updatable.
+</ParamField>
+
+<ParamField path="positionMode" type="'manual' | 'gps'" default="'manual'">
+  How link positions are determined. Not updatable.
+</ParamField>
+
+<ParamField path="renderMode" type="'2d' | '3d'" default="'3d'">
+  How navigation arrows are rendered. Not updatable.
+</ParamField>
+
+<ParamField path="nodes" type="array">
+  Initial node list (client mode only). Not updatable — use `setNodes()` instead.
+</ParamField>
+
+<ParamField path="getNode" type="function">
+  `(nodeId: string) => Promise<Node>`. Callback to fetch a node's configuration (server mode only). Required in server mode.
+</ParamField>
+
+<ParamField path="startNodeId" type="string">
+  ID of the initially loaded node. If omitted, the first node is used. Required in server mode.
+</ParamField>
+
+<ParamField path="preload" type="boolean | function" default="false">
+  Preload linked nodes before the user navigates to them. Can be a function `(node, link) => boolean` for selective preloading.
+</ParamField>
+
+<ParamField path="transitionOptions" type="object | function" default="{ showLoader: true, speed: '20rpm', effect: 'fade', rotation: true }">
+  Configures the transition when switching nodes. Can be a static object or a callback `(toNode, fromNode?, fromLink?) => options`.
+
+  Static object fields:
+
+  | Field | Type | Default | Description |
+  |---|---|---|---|
+  | `showLoader` | `boolean` | `true` | Show the loader while loading the next panorama |
+  | `effect` | `'none' \| 'fade' \| 'black' \| 'white'` | `'fade'` | Transition effect |
+  | `speed` | `string \| number` | `'20rpm'` | Speed or duration of the transition |
+  | `rotation` | `boolean` | `true` | Rotate toward the next node before transitioning |
+
+  When using a callback, two additional fields are available: `rotateTo` (where to rotate before switching) and `zoomTo` (new zoom level).
+</ParamField>
+
+<ParamField path="linksOnCompass" type="boolean" default="true">
+  Show link directions on the Compass plugin overlay.
+</ParamField>
+
+<ParamField path="showLinkTooltip" type="boolean" default="true">
+  Show a tooltip on each link arrow containing the node's `name`, `thumbnail`, and `caption`.
+</ParamField>
+
+<ParamField path="getLinkTooltip" type="function">
+  `(content: string, link, node) => string`. Callback to customize the tooltip content for a link. The first argument is the default tooltip HTML.
+</ParamField>
+
+<ParamField path="arrowStyle" type="object">
+  Global style for link arrows.
+
+  ```javascript
+  arrowStyle: {
+      // use an image instead of the default circular button
+      image: 'path/to/arrow.png',
+      size: { width: 80, height: 80 },
+      // or add CSS
+      className: 'my-arrow',
+      style: { opacity: 0.8 },
+  }
+  ```
+
+  Default is a circular button with a ripple effect, 80×80px.
+</ParamField>
+
+<ParamField path="arrowsPosition" type="object">
+  Fine-tuning for arrow placement (3D mode). All values are in radians unless noted.
+
+  ```javascript
+  arrowsPosition: {
+      minPitch: 0.3,                    // minimum vertical angle
+      maxPitch: Math.PI / 2,            // maximum vertical angle
+      linkOverlapAngle: Math.PI / 4,    // angle below which arrows become transparent
+      linkPitchOffset: -0.1,            // vertical offset (2D + GPS mode)
+  }
+  ```
+</ParamField>
+
+<ParamField path="map" type="object">
+  Configuration for Map plugin integration (client mode only). The `imageUrl` for the map **must** be set here, not in the Map plugin configuration.
+
+  ```javascript
+  // Manual positioning
+  map: {
+      imageUrl: 'map.jpg',
+  }
+
+  // GPS-based automatic positioning
+  map: {
+      imageUrl: 'map.jpg',
+      size: { width: 1600, height: 1200 },
+      extent: [-80.158123, 25.668050, -80.153824, 25.665308],
+  }
+  ```
+</ParamField>
+
+## Methods
+
+#### `setNodes(nodes, startNodeId?)` _(client mode only)_
+
+Replaces all nodes and navigates to the first one (or to `startNodeId`).
+
+#### `updateNode(node)` _(client mode only)_
+
+Updates a single node. Only `id` is required; all other fields are optional. If the updated node is the current one, the viewer refreshes accordingly.
+
+```javascript
+virtualTourPlugin.updateNode({
+    id: 'node-1',
+    caption: 'New caption',
+    links: [...newLinks],
+});
+```
+
+#### `setCurrentNode(nodeId, options?)`
+
+Navigates to a specific node. Pass `options` to override `transitionOptions` for this transition only.
+
+#### `gotoLink(nodeId, speed?): Promise`
+
+Rotates the view to face a specific link. Default speed is `8rpm`.
+
+```javascript
+virtualTourPlugin.gotoLink('node-2', '4rpm')
+    .then(() => { /* animation complete */ });
+```
+
+#### `getCurrentNode()`
+
+Returns the current node object.
+
+#### `getLinkPosition(nodeId): Position`
+
+Returns the current viewer position (yaw/pitch) of a link.
+
+## Events
+
+#### `node-changed(node, data)`
+
+Fired when the active node changes.
+
+```javascript
+virtualTourPlugin.addEventListener('node-changed', ({ node, data }) => {
+    console.log(`Now viewing: ${node.id}`);
+    if (data.fromNode) {
+        console.log(`Previously: ${data.fromNode.id}`);
+    }
+});
+```
+
+#### `enter-arrow(link, node)` / `leave-arrow(link, node)`
+
+Fired when the cursor enters or leaves a navigation arrow.

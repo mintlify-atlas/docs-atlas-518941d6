@@ -1,0 +1,67 @@
+---
+title: "Stereo plugin"
+description: "Enable split-screen VR stereo view on mobile devices using the gyroscope."
+---
+
+The Stereo plugin adds a side-by-side VR stereo view for mobile devices. It requires the [Gyroscope plugin](/plugins/gyroscope) and uses the WakeLock API to prevent the screen from dimming while active.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/stereo-plugin
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/stereo-plugin
+```
+
+</CodeGroup>
+
+## Usage
+
+Load both the Gyroscope plugin and the Stereo plugin. The stereo button is only shown when the gyroscope API is available.
+
+```javascript
+import { Viewer } from '@photo-sphere-viewer/core';
+import { GyroscopePlugin } from '@photo-sphere-viewer/gyroscope-plugin';
+import { StereoPlugin } from '@photo-sphere-viewer/stereo-plugin';
+
+const viewer = new Viewer({
+    panorama: 'path/to/panorama.jpg',
+    plugins: [
+        GyroscopePlugin,
+        StereoPlugin,
+    ],
+});
+```
+
+<Warning>
+  The Stereo plugin requires the [Gyroscope plugin](/plugins/gyroscope) to be loaded alongside it.
+</Warning>
+
+## Configuration
+
+<ParamField path="lang" type="object">
+  Localization strings merged with the main viewer `lang` object.
+
+  ```javascript
+  lang: {
+      stereo: 'Stereo view',
+      stereoNotification: 'Click anywhere to exit stereo view.',
+      pleaseRotate: 'Please rotate your device',
+      tapToContinue: '(or tap to continue)',
+  }
+  ```
+</ParamField>
+
+## Navbar buttons
+
+This plugin adds one button to the default navbar:
+
+- **`stereo`** — activates stereo view
+
+<Note>
+  If you use a custom navbar, add `'stereo'` to your navbar configuration manually. The button is only shown when the device gyroscope API is available.
+</Note>

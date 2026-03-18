@@ -1,0 +1,137 @@
+---
+title: "Equirectangular tiles adapter"
+description: "Reduce initial load time and bandwidth by slicing large equirectangular panoramas into tiles loaded on demand. Supports single and multi-level tile sets."
+---
+
+The equirectangular tiles adapter reduces the initial loading time and bandwidth consumption by slicing large equirectangular panoramas into many smaller tiles. Only the tiles visible at the current zoom level and viewport position are loaded.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @photo-sphere-viewer/equirectangular-tiles-adapter
+```
+
+```bash yarn
+yarn add @photo-sphere-viewer/equirectangular-tiles-adapter
+```
+
+</CodeGroup>
+
+## Usage
+
+```javascript
+import { EquirectangularTilesAdapter } from '@photo-sphere-viewer/equirectangular-tiles-adapter';
+
+const viewer = new Viewer({
+    adapter: EquirectangularTilesAdapter,
+    panorama: {
+        width: 12000,
+        cols: 16,
+        rows: 8,
+        baseUrl: 'panorama_low.jpg',
+        tileUrl: (col, row) => {
+            return `panorama_${col}_${row}.jpg`;
+        },
+    },
+});
+```
+
+<Note>
+  With this adapter, pixel positions refer to the full size of the panorama (the first level when using multi-level tiles).
+</Note>
+
+## Adapter configuration
+
+<ParamField path="baseBlur" type="boolean" default="true">
+  Applies a blur filter to the base image (`baseUrl`). This softens the low-resolution placeholder while tiles are loading.
+</ParamField>
+
+<ParamField path="showErrorTile" type="boolean" default="true">
+  Shows a warning sign on tiles that cannot be loaded.
+</ParamField>
+
+<ParamField path="antialias" type="boolean" default="true">
+  Applies antialiasing to high-resolution tiles.
+</ParamField>
+
+<ParamField path="resolution" type="number" default="64">
+  The number of faces of the sphere geometry. See the [equirectangular adapter](/adapters/equirectangular#configuration) for details.
+</ParamField>
+
+## Panorama options
+
+The `panorama` option and the `setPanorama()` method accept either a single tile level configuration or a multi-level configuration for adaptive resolution based on zoom level.
+
+### Single level
+
+<ParamField path="width" type="number" required>
+  Total width of the panorama in pixels. The height is always `width / 2`.
+</ParamField>
+
+<ParamField path="cols" type="number" required>
+  Number of columns. Must be a power of two (`4`, `8`, `16`, `32`, `64`). Maximum value is `64`.
+</ParamField>
+
+<ParamField path="rows" type="number" required>
+  Number of rows. Must be a power of two (`2`, `4`, `8`, `16`, `32`). Maximum value is `32`.
+</ParamField>
+
+<ParamField path="tileUrl" type="(col: number, row: number) => string | null" required>
+  Function that returns the URL for a given tile. Return `null` to skip loading a specific tile.
+</ParamField>
+
+<ParamField path="baseUrl" type="string">
+  URL of a low-resolution complete panorama image to display while tiles are loading. Strongly recommended for a good user experience.
+</ParamField>
+
+<ParamField path="basePanoData" type="object | function">
+  Panorama cropping data associated with the low-resolution base image. Follows the same format as the [`panoData` configuration option](/guide/configuration#panodata).
+</ParamField>
+
+### Multiple levels
+
+Provide multiple tile configurations to serve different resolutions at different zoom levels. The best level is chosen automatically based on the current zoom and viewer size.
+
+<ParamField path="levels" type="array" required>
+  Array of tile level configurations. Each element has `width`, `cols`, and `rows` (same fields as single level).
+
+  ```javascript
+  levels: [
+      { width: 6144,  cols: 16, rows: 8  },
+      { width: 12288, cols: 32, rows: 16 },
+      { width: 24576, cols: 64, rows: 32 },
+  ]
+  ```
+</ParamField>
+
+<ParamField path="tileUrl" type="(col: number, row: number, level: number) => string | null" required>
+  Function that returns the URL for a given tile at a given level index. Return `null` to skip loading a specific tile.
+</ParamField>
+
+<ParamField path="baseUrl" type="string">
+  URL of a low-resolution complete panorama image to display while tiles are loading.
+</ParamField>
+
+<ParamField path="basePanoData" type="object | function">
+  Panorama cropping data for the base image.
+</ParamField>
+
+## Preparing the panorama
+
+Use [ImageMagick](https://imagemagick.org) to split a large panorama into tiles. The following example splits a 12,000×6,000 pixel image into 16 columns and 8 rows (750×750 px tiles):
+
+```bash
+magick.exe panorama.jpg \
+  -crop 750x750 -quality 95 \
+  -set filename:tile "%[fx:page.x/750]_%[fx:page.y/750]" \
+  -set filename:orig %t \
+  %[filename:orig]_%[filename:tile].jpg
+```
+
+You can also use the [PineTools split image tool](https://pinetools.com/split-image) for smaller images.
+
+<Tip>
+  Keep individual tile sizes at or below 1024×1024 pixels. This limits the maximum panorama size to 65,536×32,768 pixels (2 gigapixels).
+</Tip>
