@@ -248,7 +248,11 @@ Enables or disables continuous rendering. Useful when displaying videos.
 
 ### `resize(size)`
 
-Resizes the viewer container.
+Resizes the viewer container. `size` is a `CssSize` object with `width` and `height` as CSS strings (e.g. `'500px'`, `'100%'`).
+
+```javascript
+viewer.resize({ width: '800px', height: '600px' });
+```
 
 ---
 

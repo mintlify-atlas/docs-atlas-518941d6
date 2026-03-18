@@ -57,9 +57,12 @@ Plugins extend the viewer with new behaviour. This guide covers everything you n
     ```javascript
     init() {
         // listen to a viewer event
-        this.addEventListeners([
-            [this.viewer, 'click', this.onClick],
-        ]);
+        this.viewer.addEventListener('click', this.onClick);
+    }
+
+    destroy() {
+        this.viewer.removeEventListener('click', this.onClick);
+        super.destroy();
     }
 
     onClick = (event) => {
