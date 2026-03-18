@@ -1,0 +1,119 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Photo Sphere Viewer",
+  "projectDescription": "A JavaScript library built on Three.js to display interactive 360° sphere panoramas in the browser.",
+  "theme": "palm",
+  "primaryColor": "#599fe6",
+  "lightColor": "#8acbe7",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "getting-started",
+              "migration"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "guide/configuration",
+              "guide/methods",
+              "guide/events",
+              "guide/navbar",
+              "guide/style"
+            ]
+          },
+          {
+            "group": "Adapters",
+            "pages": [
+              "adapters/overview",
+              "adapters/equirectangular",
+              "adapters/equirectangular-tiles",
+              "adapters/equirectangular-video",
+              "adapters/cubemap",
+              "adapters/cubemap-tiles",
+              "adapters/cubemap-video",
+              "adapters/dual-fisheye"
+            ]
+          },
+          {
+            "group": "Plugins",
+            "pages": [
+              "plugins/overview",
+              "plugins/markers",
+              "plugins/virtual-tour",
+              "plugins/gallery",
+              "plugins/map",
+              "plugins/plan",
+              "plugins/autorotate",
+              "plugins/compass",
+              "plugins/gyroscope",
+              "plugins/stereo",
+              "plugins/video",
+              "plugins/overlays",
+              "plugins/resolution",
+              "plugins/settings",
+              "plugins/visible-range",
+              "plugins/writing-a-plugin"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "guide/frameworks",
+              "guide/development"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Display equirectangular 360° panoramas with WebGL via Three.js",
+    "Multiple adapters: cubemap, tiled, video, dual-fisheye",
+    "Rich plugin system: markers, virtual tours, map, gallery, gyroscope, and more",
+    "TypeScript-first with strongly typed events and full type declarations",
+    "Monorepo of scoped npm packages (@photo-sphere-viewer/*)",
+    "Customizable navbar, keyboard controls, and SCSS theming",
+    "Smooth animations, transitions, and inertia-based navigation"
+  ],
+  "publicApiSurface": [
+    "Viewer",
+    "AbstractAdapter",
+    "EquirectangularAdapter",
+    "DualFisheyeAdapter",
+    "AbstractPlugin",
+    "AbstractConfigurablePlugin",
+    "AbstractButton",
+    "AbstractComponent",
+    "registerButton",
+    "Cache",
+    "DEFAULTS",
+    "SYSTEM",
+    "CONSTANTS",
+    "events",
+    "utils",
+    "PSVError",
+    "TypedEvent",
+    "MarkersPlugin",
+    "VirtualTourPlugin",
+    "GalleryPlugin",
+    "MapPlugin",
+    "PlanPlugin",
+    "AutorotatePlugin",
+    "CompassPlugin",
+    "GyroscopePlugin",
+    "StereoPlugin",
+    "VideoPlugin",
+    "OverlaysPlugin",
+    "ResolutionPlugin",
+    "SettingsPlugin",
+    "VisibleRangePlugin"
+  ]
+}
